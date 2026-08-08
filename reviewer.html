@@ -78,7 +78,7 @@
       width: min(1100px, calc(100% - 48px));
       margin: 22px auto 0;
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 14px;
     }
     .stat {
@@ -138,9 +138,9 @@
     .tag { border-radius: 999px; background: #f2f3f5; color: #4c5563; padding: 5px 9px; font-size: 12px; }
     .tag.warn { background: #fff7e6; color: var(--warn); }
     .tag.bad { background: #fff1f0; color: var(--bad); }
-    .rc-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .rc-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
     .ok-btn, .danger-btn, .ghost-btn, .primary-btn {
-      border: 0; border-radius: 8px; padding: 9px 16px; font-weight: 760;
+      border: 0; border-radius: 8px; padding: 10px 18px; font-weight: 760;
       will-change: transform;
     }
     .ok-btn:hover, .danger-btn:hover, .ghost-btn:hover, .primary-btn:hover {
@@ -155,6 +155,8 @@
     .ghost-btn { background: #f2f3f5; color: var(--ink); }
     .primary-btn { background: var(--red); color: #fff; width: 100%; }
     .primary-btn:hover { background: var(--red-dark); }
+    .top-actions .primary-btn { width: auto; }
+    .modal-actions .primary-btn { width: auto; }
 
     .empty {
       color: var(--muted); text-align: center; padding: 40px 12px;

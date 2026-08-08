@@ -303,7 +303,7 @@ async function verifyUser(payload) {
   if (!caller || caller.role !== "reviewer") return json({ error: "无权限" }, { status: 403 });
   const user = await USERS_STORE.get(`user:${payload.studentId}`, { type: "json" });
   if (!user) return json({ error: "用户不存在" }, { status: 404 });
-  const ok = payload.action === "reject" ? "rejected" : "verified";
+  const ok = payload.decision === "reject" ? "rejected" : "verified";
   user.status = ok;
   await USERS_STORE.setJSON(`user:${payload.studentId}`, user);
   return json({ ok: true, user: publicUser(user) });

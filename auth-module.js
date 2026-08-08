@@ -89,8 +89,8 @@
   async function listUsers(status) {
     return call("listUsers", status ? { status } : {});
   }
-  async function verifyUser(studentId, action) {
-    return call("verifyUser", { studentId, action });
+  async function verifyUser(studentId, decision) {
+    return call("verifyUser", { studentId, decision });
   }
   async function addReviewer(studentId, email, nickname) {
     return call("addReviewer", { studentId, email, nickname });

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23c8192e'/><text x='32' y='32' font-size='38' font-weight='800' fill='%23fff' text-anchor='middle' dominant-baseline='central' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif'>候</text></svg>" />
+  <title>登录 · 物候</title>
+  <style>
+    :root {
+      --red: #c8192e; --red-dark: #9f1426; --red-soft: #fff1f3;
+      --ink: #20242a; --muted: #68707d; --line: #e6e8ec; --bg: #f7f8fa; --card: #fff;
+      --ok: #168a52; --bad: #b42318; --shadow: 0 16px 40px rgba(32,36,42,.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    .card { width: 100%; max-width: 400px; background: var(--card); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+    .head { background: var(--red); color: #fff; padding: 24px 28px; }
+    .head .brand { display: flex; align-items: center; gap: 12px; }
+    .head .mark { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; }
+    .head .title { font-size: 20px; font-weight: 700; }
+    .head .sub { font-size: 13px; opacity: .9; margin-top: 2px; }
+    .body { padding: 24px 28px 28px; }
+    .tabs { display: flex; gap: 6px; background: var(--bg); padding: 4px; border-radius: 10px; margin-bottom: 20px; }
+    .tabs button { flex: 1; border: 0; background: transparent; padding: 9px 0; border-radius: 8px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .18s; }
+    .tabs button.active { background: var(--card); color: var(--red); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+    .field input { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; font-size: 15px; color: var(--ink); background: var(--card); transition: border-color .18s; }
+    .field input:focus { outline: none; border-color: var(--red); }
+    .field input::placeholder { color: #aab1bb; }
+    .code-row { display: flex; gap: 8px; }
+    .code-row input { flex: 1; }
+    .code-btn { flex: 0 0 auto; padding: 0 14px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); color: var(--red); font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .18s; }
+    .code-btn:disabled { color: var(--muted); cursor: not-allowed; }
+    .code-btn:not(:disabled):hover { border-color: var(--red); }
+    .submit { width: 100%; padding: 12px; border: 0; border-radius: 10px; background: var(--red); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: background .18s, transform .1s; }
+    .submit:hover { background: var(--red-dark); }
+    .submit:active { transform: scale(.99); }
+    .submit:disabled { background: #d9a0a7; cursor: not-allowed; }
+    .msg { font-size: 13px; margin-top: 12px; padding: 10px 12px; border-radius: 8px; display: none; }
+    .msg.show { display: block; }
+    .msg.err { background: var(--red-soft); color: var(--bad); }
+    .msg.ok { background: #eaf7f0; color: var(--ok); }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 16px; text-align: center; line-height: 1.6; }
+    .hint b { color: var(--ink); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <div class="brand">
+        <div class="mark">候</div>
+        <div>
+          <div class="title">物候</div>
+          <div class="sub">万物有时，静候良人</div>
+        </div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="tabs">
+        <button class="active" data-mode="login">登录</button>
+        <button data-mode="register">注册（学生）</button>
+      </div>
+
+      <!-- 登录 -->
+      <form class="panel active" id="loginPanel" autocomplete="on">
+        <div class="field">
+          <label>学号</label>
+          <input id="loginId" type="text" placeholder="请输入学号" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label>密码</label>
+          <input id="loginPwd" type="password" placeholder="请输入密码" autocomplete="current-password" required />
+        </div>
+        <button class="submit" type="submit" id="loginBtn">登录</button>
+        <div class="msg" id="loginMsg"></div>
+      </form>
+
+      <!-- 注册 -->
+      <form class="panel" id="registerPanel" autocomplete="off">
+        <div class="field">
+          <label>邮箱</label>
+          <input id="regEmail" type="email" placeholder="用于接收验证码和密码" required />
+        </div>
+        <div class="field">
+          <label>学号（将作为用户名）</label>
+          <input id="regId" type="text" placeholder="请输入学号" required />
+        </div>
+        <div class="field">
+          <label>邮箱验证码</label>
+          <div class="code-row">
+            <input id="regCode" type="text" inputmode="numeric" placeholder="6 位验证码" required />
+            <button type="button" class="code-btn" id="sendCodeBtn">获取验证码</button>
+          </div>
+        </div>
+        <button class="submit" type="submit" id="registerBtn">完成注册</button>
+        <div class="msg" id="regMsg"></div>
+        <div class="hint">密码将由系统随机生成并发到你的邮箱，无需自己设置。<br />注册后需管理员认证学生身份才可发布。</div>
+      </form>
+
+      <div class="hint">演示账号 · 学生 <b>student / student123</b> · 审核员 <b>admin / admin123</b></div>
+    </div>
+  </div>
+
+  <script src="./config.js"></script>
+  <script src="./auth-module.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      const Auth = window.AuthModule;
+
+      // 已登录则按角色跳走
+      (async function () {
+        const user = await Auth.restore();
+        if (user) Auth.redirectByRole(user.role);
+      })();
+
+      function setMsg(el, text, type) {
+        if (!text) { el.classList.remove("show"); el.textContent = ""; return; }
+        el.textContent = text;
+        el.className = "msg show " + (type || "err");
+      }
+
+      // tab 切换
+      document.querySelectorAll(".tabs button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("active", b === btn));
+          const mode = btn.dataset.mode;
+          document.getElementById("loginPanel").classList.toggle("active", mode === "login");
+          document.getElementById("registerPanel").classList.toggle("active", mode === "register");
+        });
+      });
+
+      // 登录
+      document.getElementById("loginPanel").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("loginBtn");
+        const msg = document.getElementById("loginMsg");
+        const studentId = document.getElementById("loginId").value.trim();
+        const password = document.getElementById("loginPwd").value;
+        if (!studentId || !password) { setMsg(msg, "请输入学号和密码"); return; }
+        btn.disabled = true; btn.textContent = "登录中…"; setMsg(msg, "");
+        try {
+          const body = await Auth.login(studentId, password);
+          setMsg(msg, "登录成功，正在跳转…", "ok");
+          setTimeout(() => Auth.redirectByRole(body.user.role), 400);
+        } catch (err) {
+          setMsg(msg, err.message);
+          btn.disabled = false; btn.textContent = "登录";
+        }
+      });
+
+      // 发送验证码 + 倒计时
+      const codeBtn = document.getElementById("sendCodeBtn");
+      let cooldownTimer = null;
+      codeBtn.addEventListener("click", async () => {
+        const email = document.getElementById("regEmail").value.trim();
+        if (!email) { setMsg(document.getElementById("regMsg"), "请先填写邮箱"); return; }
+        codeBtn.disabled = true;
+        try {
+          await Auth.sendCode(email);
+          setMsg(document.getElementById("regMsg"), "验证码已发送，请查收邮箱", "ok");
+          let left = 60;
+          codeBtn.textContent = left + "s 后重发";
+          cooldownTimer = setInterval(() => {
+            left -= 1;
+            if (left <= 0) { clearInterval(cooldownTimer); codeBtn.disabled = false; codeBtn.textContent = "获取验证码"; }
+            else codeBtn.textContent = left + "s 后重发";
+          }, 1000);
+        } catch (err) {
+          setMsg(document.getElementById("regMsg"), err.message);
+          codeBtn.disabled = false;
+        }
+      });
+
+      // 注册
+      document.getElementById("registerPanel").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("registerBtn");
+        const msg = document.getElementById("regMsg");
+        const email = document.getElementById("regEmail").value.trim();
+        const studentId = document.getElementById("regId").value.trim();
+        const code = document.getElementById("regCode").value.trim();
+        if (!email || !studentId || !code) { setMsg(msg, "请填写完整信息"); return; }
+        btn.disabled = true; btn.textContent = "提交中…"; setMsg(msg, "");
+        try {
+          await Auth.register(email, studentId, code);
+          setMsg(msg, "注册成功！密码已发送到你的邮箱，请用学号+密码登录。", "ok");
+          document.getElementById("registerPanel").reset();
+          if (cooldownTimer) clearInterval(cooldownTimer);
+          codeBtn.disabled = false; codeBtn.textContent = "获取验证码";
+          // 自动切到登录并预填学号
+          document.querySelector('.tabs button[data-mode="login"]').click();
+          document.getElementById("loginId").value = studentId;
+          btn.disabled = false; btn.textContent = "完成注册";
+        } catch (err) {
+          setMsg(msg, err.message);
+          btn.disabled = false; btn.textContent = "完成注册";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -12,35 +12,49 @@
 
 ## 运行方式
 
-1. **配置 API Key**：复制 `.env.example` 为 `.env`，在 `DASHSCOPE_API_KEY` 填入你的阿里云百炼 DashScope Key。
-   （`.env` 已被 `.gitignore` 忽略；Key 只在后端 `netlify/functions/ai.mjs` 的 `process.env` 中读取，前端不持有任何密钥。）
-2. **起本地服务（推荐）**：用 Netlify CLI，可一并跑起静态站 + Functions + Blobs，Key 自动从 `.env` 注入：
+> 鉴权（登录/注册/用户审核）依赖 Netlify Functions，**必须用 `netlify dev` 运行**；`python -m http.server` 跑不了登录。
+
+1. **配置环境变量**：复制 `.env.example` 为 `.env`，填入：
+   - `DASHSCOPE_API_KEY`：阿里云百炼 Key（VLM/NLP）
+   - `MAIL_*`：QQ 或 163 邮箱 SMTP（用于注册验证码与随机密码发送，需在邮箱设置里开启 SMTP 并取得授权码）
+2. **安装依赖并启动**：
    ```bash
    npm install -g netlify-cli
-   cp .env.example .env   # 然后编辑 .env 填入真实 Key
-   netlify dev
+   npm install                 # 安装 @netlify/blobs、nodemailer
+   netlify dev                 # 起 静态站 + Functions + Blobs，自动从 .env 注入环境变量
    ```
-   多页面实时联动依赖同源 localStorage + storage 事件，`file://` 直接打开可能不触发；`netlify dev` 会分配一个本地端口，访问其下的 `/index.html`（买家/卖家）和 `/reviewer.html`（审核员）即可。
-   > 仅预览静态 UI（Functions/Blobs 不可用）时可用 `python -m http.server 8000`，但 AI 识别、远程数据、图片存储均会失败并走兜底。
-3. **买家需求解析**：经同一后端代理 `/.netlify/functions/ai` 调用 Qwen 文本模型；失败时自动用本地规则兜底。
+   访问 `netlify dev` 分配的端口下的 `/login.html` 进入登录页。
+   > 仅预览静态 UI（Functions/Blobs 不可用）时可用 `python -m http.server 8000`，但登录/AI 识别/远程数据/图片存储均不可用。
+3. **演示账号**：学生 `student` / `student123`；审核员 `admin` / `admin123`（首次调用鉴权接口时由后端 `ensureSeed()` 自动创建）。
+
+## 账号与登录
+
+- **注册（仅学生）**：邮箱 + 学号 + 邮箱验证码；密码由系统随机生成并通过邮件发送，无需自己设置。注册后状态为「待认证」，需审核员认证后才能发布。
+- **登录**：学号 + 密码。登录后按角色自动分流：学生→`index.html`，审核员→`reviewer.html`。两界面物理隔离、不互跳，各自有严格角色门禁。
+- **审核员职责**：①认证学生身份 ②审核商品 ③处理举报 ④添加新审核员（工作台「添加审核员」按钮，新审核员密码同样邮件发送）。
+- 用户表/验证码/会话存 Netlify Blobs（后端，per-key 存储）；密码用 `pbkdf2` 哈希；前端只存登录 token。
 
 ## 三角色页面
 
 | 页面 | 角色 | 职责 |
 |---|---|---|
-| `index.html` | 买家 / 卖家 / 援助池 | 买家发布需求并匹配；卖家上传照片识别+文案、提交审核；困难生定向援助需求匹配和流转 |
-| `reviewer.html` | 审核员 | 审核待办（可「修改后通过」纠偏 AI 结果）、处理举报、物品总览 |
+| `login.html` | 公共入口 | 登录 / 学生注册，按角色分流 |
+| `index.html` | 学生（买家/卖家/援助池） | 买家发布需求并匹配；卖家上传照片识别+文案、提交审核；困难生定向援助。学生界面，登录后可自由切换买卖 |
+| `reviewer.html` | 审核员 | 认证学生、审核物品、处理举报、添加审核员 |
 
-三个页面共享 localStorage 数据，通过 `storage` 事件实时联动：
+两个主界面共享 localStorage 物品数据，通过 `storage` 事件实时联动：
 卖家提交 → 审核员队列实时刷新 → 审核通过 → 买家推荐列表实时更新。
 
 ## 文件分工
 
 | 文件 | 负责人 | 说明 |
 |---|---|---|
-| `config.js` | 同学C | 全局配置（CDN/模型参数/类别标签/打分/密钥），唯一真相源 |
-| `index.html` | 同学C | 买家/卖家页面 + Agent 匹配 + 整体集成 |
-| `reviewer.html` | 同学C | 审核员工作台：审核 AI 结果、处理举报、物品治理 |
+| `config.js` | 同学C | 全局配置（CDN/模型参数/类别标签/打分/角色/鉴权/密钥），唯一真相源 |
+| `index.html` | 同学C | 学生界面：买卖/援助 + Agent 匹配 + 学生门禁 + owner 注入 |
+| `reviewer.html` | 同学C | 审核员工作台：认证学生、审核物品、处理举报、添加审核员 + 审核员门禁 |
+| `login.html` | 同学C | 公共登录/注册页，按角色分流到不同主界面 |
+| `auth-module.js` | 同学C | 前端鉴权模块：登录/注册/会话/角色门禁 |
+| `netlify/functions/auth.mjs` | 同学C | 鉴权后端：注册/登录/会话/用户审核/添加审核员（Blobs+nodemailer） |
 | `vision-module.js` | 同学A | MediaPipe 手部遮挡检测 |
 | `vlm-module.js` | 同学B | Qwen-VL 视觉语言模块：看图定类 + 出文案（DashScope API） |
 | `nlp-module.js` | 同学B | 浏览器版 NLP：文案生成 + 需求解析（含离线兜底） |

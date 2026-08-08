@@ -231,8 +231,9 @@
       </div>
     </div>
     <div class="top-actions">
+      <button class="primary-btn" id="addReviewerBtn">添加审核员</button>
       <button class="refresh-btn" id="refreshBtn">手动刷新</button>
-      <a href="index.html" class="back-link">← 返回主站</a>
+      <div class="user-area" id="userArea"></div>
     </div>
   </header>
 
@@ -242,6 +243,7 @@
     <div class="stat"><span>被举报</span><strong id="statReported">0</strong></div>
     <div class="stat"><span>援助锁定</span><strong id="statAidLocked">0</strong></div>
     <div class="stat"><span>已下架</span><strong id="statRemoved">0</strong></div>
+    <div class="stat"><span>待认证用户</span><strong id="statPendingUsers">0</strong></div>
   </div>
 
   <main class="main">
@@ -250,6 +252,7 @@
       <button class="tab-btn" data-tab="report">举报处理</button>
       <button class="tab-btn" data-tab="aid">援助锁定</button>
       <button class="tab-btn" data-tab="all">全部物品</button>
+      <button class="tab-btn" data-tab="users">用户审核</button>
     </nav>
 
     <section class="page active" id="pagePending">
@@ -275,6 +278,18 @@
         <input id="searchInput" placeholder="搜索标题 / 科目 / 描述" />
       </div>
       <div class="card-list" id="allList"></div>
+    </section>
+
+    <section class="page" id="pageUsers">
+      <div class="filters">
+        <select id="userStatusFilter">
+          <option value="pending">待认证</option>
+          <option value="verified">已认证</option>
+          <option value="rejected">已拒绝</option>
+          <option value="all">全部用户</option>
+        </select>
+      </div>
+      <div class="card-list" id="usersList"></div>
     </section>
   </main>
 
@@ -313,7 +328,38 @@
     </div>
   </div>
 
+  <!-- 添加审核员 弹窗 -->
+  <div class="modal" id="reviewerModal">
+    <div class="modal-content">
+      <h3>添加审核员</h3>
+      <div class="field">
+        <label>学号</label>
+        <input id="newReviewerId" placeholder="新审核员的学号（登录用户名）" />
+      </div>
+      <div class="field">
+        <label>昵称（可选）</label>
+        <input id="newReviewerName" placeholder="工作台显示昵称" />
+      </div>
+      <div class="field">
+        <label>邮箱</label>
+        <input id="newReviewerEmail" type="email" placeholder="密码将自动发送到此邮箱" />
+      </div>
+      <div class="modal-actions">
+        <button class="primary-btn" id="reviewerSave">创建并发送密码</button>
+        <button class="ghost-btn" id="reviewerCancel">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .user-area { display:flex; align-items:center; gap:10px; margin-left:8px; }
+    .user-area .u-name { font-size:14px; font-weight:600; }
+    .user-area .u-logout { border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:8px; padding:6px 12px; cursor:pointer; font-size:13px; }
+    .user-area .u-logout:hover { border-color:var(--red); color:var(--red); }
+    #reviewerModal .field input { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; font-size:14px; }
+  </style>
   <script src="./config.js"></script>
+  <script src="./auth-module.js"></script>
   <script>
     // ===== 审核员工作台 =====
     // @author: 同学C - 审核治理 + 整体集成
@@ -637,23 +683,94 @@
       saveData();
     }
 
+    // ===== 用户审核（认证学生身份） =====
+    let usersList = [];
+
+    function userStatusText(u) {
+      return u.status === "verified" ? "已认证" : u.status === "rejected" ? "已拒绝" : "待认证";
+    }
+    function userStatusTag(u) {
+      const cls = u.status === "verified" ? "" : u.status === "rejected" ? "bad" : "warn";
+      return `<span class="tag ${cls}">${userStatusText(u)}</span>`;
+    }
+
+    async function renderUsers() {
+      const filter = document.getElementById("userStatusFilter").value;
+      const list = document.getElementById("usersList");
+      let all = [];
+      try {
+        const body = await window.AuthModule.listUsers(null);
+        all = body.users || [];
+      } catch (e) {
+        list.innerHTML = `<div class="empty">用户列表加载失败：${e.message}</div>`;
+        return;
+      }
+      document.getElementById("statPendingUsers").textContent =
+        all.filter((u) => u.status === "pending").length;
+      usersList = filter === "all" ? all : all.filter((u) => u.status === filter);
+
+      list.innerHTML = usersList.length
+        ? usersList.map((u) => `
+            <article class="review-card">
+              <div style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:24px;background:${(u.avatar && u.avatar.color) || "#c8192e"};flex:0 0 auto;">${(u.avatar && u.avatar.letter) || "?"}</div>
+              <div class="rc-body">
+                <div class="rc-title">${u.nickname || u.studentId} <span class="tag">${u.role === "reviewer" ? "审核员" : "学生"}</span> ${userStatusTag(u)}</div>
+                <div class="rc-meta">学号 ${u.studentId} · ${u.email || "无邮箱"}</div>
+                <div class="rc-actions">
+                  ${u.role === "student" && u.status === "pending"
+                    ? `<button class="ok-btn" data-user-verify="${u.studentId}">通过认证</button><button class="danger-btn" data-user-reject="${u.studentId}">拒绝</button>`
+                    : ""}
+                </div>
+              </div>
+            </article>
+          `).join("")
+        : `<div class="empty">暂无符合条件的用户</div>`;
+    }
+
+    async function verifyUserDo(studentId) {
+      try { await window.AuthModule.verifyUser(studentId, "verify"); renderUsers(); }
+      catch (e) { alert(e.message); }
+    }
+    async function rejectUserDo(studentId) {
+      try { await window.AuthModule.verifyUser(studentId, "reject"); renderUsers(); }
+      catch (e) { alert(e.message); }
+    }
+
+    function updateUserArea() {
+      const user = window.AuthModule.getCurrentUser();
+      const el = document.getElementById("userArea");
+      if (!el) return;
+      if (!user) { el.innerHTML = ""; return; }
+      el.innerHTML =
+        window.AuthModule.avatarHtml(user, 30) +
+        '<span class="u-name">' + (user.nickname || user.studentId) + '</span>' +
+        '<button class="u-logout" id="logoutBtn">退出</button>';
+      document.getElementById("logoutBtn").addEventListener("click", () => {
+        window.AuthModule.logout();
+        window.AuthModule.gotoLogin();
+      });
+    }
+
     // ===== 事件绑定 =====
     document.querySelectorAll(".tab-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b === btn));
         document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
         document.getElementById("page" + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1)).classList.add("active");
+        if (btn.dataset.tab === "users") renderUsers();
       });
     });
 
     document.body.addEventListener("click", (event) => {
-      const { approve: ap, remove: rm, edit, clear, aidComplete, aidRelease } = event.target.dataset;
+      const { approve: ap, remove: rm, edit, clear, aidComplete, aidRelease, userVerify, userReject } = event.target.dataset;
       if (ap) approve(ap);
       if (rm) remove(rm);
       if (edit) openEdit(edit);
       if (clear) clearReport(clear);
       if (aidComplete) completeAid(aidComplete);
       if (aidRelease) releaseAid(aidRelease);
+      if (userVerify) verifyUserDo(userVerify);
+      if (userReject) rejectUserDo(userReject);
     });
 
     document.getElementById("editSave").addEventListener("click", saveEdit);
@@ -664,14 +781,52 @@
     document.getElementById("statusFilter").addEventListener("change", renderAllItems);
     document.getElementById("searchInput").addEventListener("input", renderAllItems);
     document.getElementById("refreshBtn").addEventListener("click", renderAll);
+    document.getElementById("userStatusFilter").addEventListener("change", renderUsers);
+
+    // 添加审核员
+    document.getElementById("addReviewerBtn").addEventListener("click", () => {
+      document.getElementById("reviewerModal").classList.add("active");
+    });
+    document.getElementById("reviewerCancel").addEventListener("click", () => {
+      document.getElementById("reviewerModal").classList.remove("active");
+    });
+    document.getElementById("reviewerSave").addEventListener("click", async () => {
+      const studentId = document.getElementById("newReviewerId").value.trim();
+      const email = document.getElementById("newReviewerEmail").value.trim();
+      const nickname = document.getElementById("newReviewerName").value.trim();
+      if (!studentId || !email) { alert("请填写学号和邮箱"); return; }
+      const btn = document.getElementById("reviewerSave");
+      btn.disabled = true; btn.textContent = "创建中…";
+      try {
+        await window.AuthModule.addReviewer(studentId, email, nickname);
+        alert("审核员已创建，密码已发送到其邮箱");
+        document.getElementById("reviewerModal").classList.remove("active");
+        document.getElementById("newReviewerId").value = "";
+        document.getElementById("newReviewerEmail").value = "";
+        document.getElementById("newReviewerName").value = "";
+        renderUsers();
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = "创建并发送密码";
+      }
+    });
 
     // 跨页实时同步：主站/卖家页写入数据时触发
     window.addEventListener("storage", (event) => {
       if (event.key === STORAGE_KEY) renderAll();
     });
 
-    renderAll();
-    initRemoteSync();
+    // ===== 鉴权门禁：仅审核员可进入工作台；未登录/角色不符 → 跳登录页 =====
+    (async function () {
+      const ok = await window.AuthModule.requireRole(window.AuthModule.ROLES.reviewer);
+      if (!ok) return;
+      updateUserArea();
+      renderAll();
+      initRemoteSync();
+      renderUsers();
+      setInterval(renderUsers, REMOTE_SYNC_MS); // 定期刷新用户审核列表
+    })();
   </script>
 </body>
 </html>

@@ -1092,7 +1092,7 @@
         <button class="tab-btn" data-tab="seller">我要卖</button>
         <button class="tab-btn" data-tab="aid">援助池</button>
       </nav>
-      <a class="admin-toggle" href="reviewer.html" target="_blank">审核员入口</a>
+      <div class="user-area" id="userArea"></div>
     </header>
 
     <main class="main">
@@ -1431,6 +1431,13 @@
     </div>
   </div>
 
+  <style>
+    .user-area { display:flex; align-items:center; gap:10px; }
+    .user-area .u-name { font-size:14px; font-weight:600; color:var(--ink); }
+    .user-area .u-badge { font-size:12px; padding:2px 8px; border-radius:10px; background:#fff4e0; color:#b56a00; font-weight:600; }
+    .user-area .u-logout { border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:8px; padding:6px 12px; cursor:pointer; font-size:13px; transition:all .18s var(--ease); }
+    .user-area .u-logout:hover { border-color:var(--red); color:var(--red); }
+  </style>
   <!-- 全局配置（必须在所有模块之前加载） -->
   <script src="./config.js"></script>
   <!-- 手部遮挡检测（MediaPipe） -->
@@ -1438,6 +1445,8 @@
   <!-- NLP 文案生成 + 需求解析 + VLM 视觉语言 -->
   <script src="./nlp-module.js"></script>
   <script src="./vlm-module.js"></script>
+  <!-- 鉴权（登录/会话/门禁） -->
+  <script src="./auth-module.js"></script>
 
   <script>
     const STORAGE_KEY = (window.AppConfig && window.AppConfig.storageKeys && window.AppConfig.storageKeys.data) || "campus_cycle_demo_v1";
@@ -2143,6 +2152,7 @@
     });
 
     document.getElementById("submitDemand").addEventListener("click", async () => {
+      if (!requireVerified()) return;
       const text = document.getElementById("demandText").value.trim();
       if (!text) {
         document.getElementById("demandError").style.display = "block";
@@ -2153,10 +2163,13 @@
       document.getElementById("buyerParseMode").textContent = "解析中";
       document.getElementById("buyerParseStatus").textContent = "正在使用阿里云百炼 Qwen 解析买家需求...";
       const parsed = window.parseDemand ? await window.parseDemand(text) : parseDemandFallback(text);
+      const _du = window.AuthModule.getCurrentUser();
       const demand = {
         id: `demand-${Date.now()}`,
         ...parsed,
         text,
+        ownerId: _du ? _du.studentId : "",
+        ownerName: _du ? (_du.nickname || _du.studentId) : "",
         major: document.getElementById("buyerMajor").value.trim() || parsed.major || "不限",
         priceMax: Number(document.getElementById("buyerPrice").value) || parsed.priceMax || 30
       };
@@ -2182,6 +2195,7 @@
     });
 
     document.getElementById("submitAidNeed").addEventListener("click", async () => {
+      if (!requireVerified()) return;
       const text = document.getElementById("aidNeedText").value.trim();
       const studentCode = document.getElementById("aidCode").value.trim();
       if (!text || !studentCode) return;
@@ -2199,9 +2213,12 @@
       const budgetMax = textHasBudget
         ? (Number(parsed.budgetMax) || 20)
         : (Number(document.getElementById("aidBudget").value) || Number(parsed.budgetMax) || 20);
+      const _au = window.AuthModule.getCurrentUser();
       const aidNeed = {
         id: `aid-${Date.now()}`,
         studentCode,
+        ownerId: _au ? _au.studentId : "",
+        ownerName: _au ? (_au.nickname || _au.studentId) : "",
         category: parsed.category || document.getElementById("aidCategory").value,
         subject: parsed.subject || "",
         wantsNotes: Boolean(parsed.wantsNotes),
@@ -2511,6 +2528,8 @@
           id: `item-${Date.now()}`,
           title: `${getCategoryLabel(result)}-${result.subject}`,
           major: "不限",
+          ownerId: (window.AuthModule.getCurrentUser() || {}).studentId || "",
+          ownerName: (function (u) { return u ? (u.nickname || u.studentId) : ""; })(window.AuthModule.getCurrentUser()),
           price,
           campus: document.getElementById("sellerCampus").value.trim(),
           phone: document.getElementById("sellerPhone").value.trim(),
@@ -2596,6 +2615,7 @@
     });
 
     document.getElementById("submitItem").addEventListener("click", async () => {
+      if (!requireVerified()) return;
       if (!data.currentDraft) return;
       const submitBtn = document.getElementById("submitItem");
       // 提交时捕获用户手动修改的最新值
@@ -2771,8 +2791,42 @@
       if (event.key === STORAGE_KEY) renderAll();
     });
 
-    renderAll();
-    initRemoteSync();
+    // ===== 顶栏用户区渲染（头像 + 昵称 + 待认证徽章 + 退出） =====
+    function updateUserArea() {
+      const user = window.AuthModule.getCurrentUser();
+      const el = document.getElementById("userArea");
+      if (!el) return;
+      if (!user) { el.innerHTML = ""; return; }
+      const badge = (user.role === "student" && user.status !== "verified")
+        ? '<span class="u-badge">认证中</span>' : "";
+      el.innerHTML =
+        window.AuthModule.avatarHtml(user, 30) +
+        '<span class="u-name">' + (user.nickname || user.studentId) + '</span>' +
+        badge +
+        '<button class="u-logout" id="logoutBtn">退出</button>';
+      document.getElementById("logoutBtn").addEventListener("click", () => {
+        window.AuthModule.logout();
+        window.AuthModule.gotoLogin();
+      });
+    }
+
+    // ===== 学生认证拦截：未认证不能发布 =====
+    function requireVerified() {
+      if (!window.AuthModule.isVerified()) {
+        alert("管理员还未认证你的学生身份，暂时不能发布，请耐心等待。");
+        return false;
+      }
+      return true;
+    }
+
+    // ===== 鉴权门禁：仅学生可进入主站；未登录/角色不符 → 跳登录页 =====
+    (async function () {
+      const ok = await window.AuthModule.requireRole(window.AuthModule.ROLES.student);
+      if (!ok) return;
+      updateUserArea();
+      renderAll();
+      initRemoteSync();
+    })();
   </script>
 </body>
 </html>

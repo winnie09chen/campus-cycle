@@ -44,7 +44,23 @@
 
     // ---------- localStorage 键 ----------
     storageKeys: {
-      data: "campus_cycle_demo_v1"
+      data: "campus_cycle_demo_v1",
+      session: "campus_cycle_session_v1"
+    },
+
+    // ---------- 角色 ----------
+    roles: {
+      student: "student",
+      reviewer: "reviewer"
+    },
+
+    // ---------- 鉴权 ----------
+    // 后端 auth.mjs 单入口，body 带 action 分发；登录页按角色分流到不同主界面。
+    auth: {
+      apiEndpoint: "/.netlify/functions/auth",
+      loginPage: "login.html",
+      studentPage: "index.html",
+      reviewerPage: "reviewer.html"
     },
 
     // ---------- 密钥 ----------

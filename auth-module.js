@@ -96,6 +96,21 @@
     return call("addReviewer", { studentId, email, nickname });
   }
 
+  // 改昵称：调后端 + 同步刷新本地会话（昵称/头像）
+  async function updateProfile(nickname) {
+    const body = await call("updateProfile", { nickname });
+    const s = getSession();
+    if (s && body.user) {
+      setSession({ ...s, nickname: body.user.nickname, avatar: body.user.avatar });
+    }
+    return body;
+  }
+
+  // 改密码
+  async function changePassword(oldPassword, newPassword) {
+    return call("changePassword", { oldPassword, newPassword });
+  }
+
   // 刷新页面时用 token 恢复最新用户信息，顺带校验会话有效性
   async function restore() {
     const token = getToken();
@@ -175,6 +190,8 @@
     avatarHtml,
     listUsers,
     verifyUser,
-    addReviewer
+    addReviewer,
+    updateProfile,
+    changePassword
   };
 })(window);

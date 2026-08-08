@@ -351,8 +351,38 @@ async function addReviewer(payload) {
   return json({ ok: true, message: "审核员已创建，密码已发送到其邮箱" });
 }
 
+async function updateProfile(payload) {
+  const user = await getSessionUser(payload.token);
+  if (!user) return json({ error: "未登录或会话已过期" }, { status: 401 });
+  const nickname = String(payload.nickname || "").trim();
+  if (!nickname) return json({ error: "昵称不能为空" }, { status: 400 });
+  if (nickname.length > 20) return json({ error: "昵称最多 20 个字" }, { status: 400 });
+  user.nickname = nickname;
+  user.avatar = genAvatar(nickname);
+  await USERS_STORE.setJSON(`user:${user.studentId}`, user);
+  return json({ ok: true, user: publicUser(user) });
+}
+
+async function changePassword(payload) {
+  const user = await getSessionUser(payload.token);
+  if (!user) return json({ error: "未登录或会话已过期" }, { status: 401 });
+  const oldPwd = String(payload.oldPassword || "");
+  const newPwd = String(payload.newPassword || "");
+  if (hashPassword(oldPwd, user.salt) !== user.passwordHash) {
+    return json({ error: "旧密码不正确" }, { status: 400 });
+  }
+  if (newPwd.length < 6) return json({ error: "新密码至少 6 位" }, { status: 400 });
+  if (newPwd === oldPwd) return json({ error: "新密码不能与旧密码相同" }, { status: 400 });
+  const salt = genSalt();
+  user.salt = salt;
+  user.passwordHash = hashPassword(newPwd, salt);
+  await USERS_STORE.setJSON(`user:${user.studentId}`, user);
+  return json({ ok: true });
+}
+
 const ACTIONS = {
-  sendCode, register, login, me, listUsers, verifyUser, addReviewer
+  sendCode, register, login, me, listUsers, verifyUser, addReviewer,
+  updateProfile, changePassword
 };
 
 export default async function handler(request) {

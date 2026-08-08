@@ -2800,8 +2800,10 @@
       const badge = (user.role === "student" && user.status !== "verified")
         ? '<span class="u-badge">认证中</span>' : "";
       el.innerHTML =
+        '<a href="profile.html" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;">' +
         window.AuthModule.avatarHtml(user, 30) +
         '<span class="u-name">' + (user.nickname || user.studentId) + '</span>' +
+        '</a>' +
         badge +
         '<button class="u-logout" id="logoutBtn">退出</button>';
       document.getElementById("logoutBtn").addEventListener("click", () => {

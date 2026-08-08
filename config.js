@@ -60,7 +60,8 @@
       apiEndpoint: "/.netlify/functions/auth",
       loginPage: "login.html",
       studentPage: "index.html",
-      reviewerPage: "reviewer.html"
+      reviewerPage: "reviewer.html",
+      profilePage: "profile.html"
     },
 
     // ---------- 密钥 ----------

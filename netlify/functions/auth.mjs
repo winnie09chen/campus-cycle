@@ -2,13 +2,20 @@
 // 用户表、验证码、会话均存 Netlify Blobs（per-key 存储，避开整文档覆盖竞态）。
 // 密码用 pbkdf2 哈希；验证码与随机密码通过 nodemailer (QQ/163 SMTP) 发送。
 // 前端统一 POST /.netlify/functions/auth，body 带 { action, ... }。
+//
+// 注意：store 不在模块顶层缓存，而是每次请求用 blobStores() 重建，
+// 以避免暖实例长期持有过期令牌（"Failed to decode token: Token expired"）。
 import { getStore } from "@netlify/blobs";
 import nodemailer from "nodemailer";
 import crypto from "node:crypto";
 
-const USERS_STORE = getStore({ name: "campus-cycle-users", consistency: "strong" });
-const CODES_STORE = getStore({ name: "campus-cycle-codes", consistency: "strong" });
-const SESSIONS_STORE = getStore({ name: "campus-cycle-sessions", consistency: "strong" });
+function blobStores() {
+  return {
+    users: getStore({ name: "campus-cycle-users", consistency: "strong" }),
+    codes: getStore({ name: "campus-cycle-codes", consistency: "strong" }),
+    sessions: getStore({ name: "campus-cycle-sessions", consistency: "strong" })
+  };
+}
 
 const MAIL_HOST = process.env.MAIL_HOST;
 const MAIL_PORT = Number(process.env.MAIL_PORT) || 465;
@@ -77,23 +84,17 @@ function publicUser(user) {
 }
 
 // ---------- 邮件 ----------
-let transporter = null;
-function getTransporter() {
-  if (transporter) return transporter;
-  transporter = nodemailer.createTransport({
+function sendMail(to, subject, html) {
+  if (!MAIL_HOST || !MAIL_USER || !MAIL_PASS) {
+    throw new Error("邮件服务未配置（请设置 MAIL_HOST / MAIL_USER / MAIL_PASS）");
+  }
+  const transporter = nodemailer.createTransport({
     host: MAIL_HOST,
     port: MAIL_PORT,
     secure: MAIL_PORT === 465,
     auth: { user: MAIL_USER, pass: MAIL_PASS }
   });
-  return transporter;
-}
-
-async function sendMail(to, subject, html) {
-  if (!MAIL_HOST || !MAIL_USER || !MAIL_PASS) {
-    throw new Error("邮件服务未配置（请设置 MAIL_HOST / MAIL_USER / MAIL_PASS）");
-  }
-  await getTransporter().sendMail({ from: MAIL_FROM, to, subject, html });
+  return transporter.sendMail({ from: MAIL_FROM, to, subject, html });
 }
 
 function mailHtml(title, lines, footnote) {
@@ -113,47 +114,43 @@ function mailHtml(title, lines, footnote) {
   </div>`;
 }
 
-// ---------- 预置账号（冷启动时确保存在） ----------
-let seedPromise = null;
-async function ensureSeed() {
-  if (seedPromise) return seedPromise;
-  seedPromise = (async () => {
-    if (!(await USERS_STORE.get("user:admin", { type: "json" }))) {
-      const salt = genSalt();
-      await USERS_STORE.setJSON("user:admin", {
-        studentId: "admin",
-        email: "",
-        passwordHash: hashPassword("admin123", salt),
-        salt,
-        nickname: "管理员",
-        avatar: genAvatar("管理员"),
-        role: "reviewer",
-        status: "verified",
-        createdAt: new Date().toISOString()
-      });
-    }
-    if (!(await USERS_STORE.get("user:student", { type: "json" }))) {
-      const salt = genSalt();
-      await USERS_STORE.setJSON("user:student", {
-        studentId: "student",
-        email: "",
-        passwordHash: hashPassword("student123", salt),
-        salt,
-        nickname: "演示学生",
-        avatar: genAvatar("演示学生"),
-        role: "student",
-        status: "verified",
-        createdAt: new Date().toISOString()
-      });
-    }
-  })();
-  return seedPromise;
+// ---------- 预置账号（确保存在；幂等） ----------
+async function ensureSeed(stores) {
+  const { users } = stores;
+  if (!(await users.get("user:admin", { type: "json" }))) {
+    const salt = genSalt();
+    await users.setJSON("user:admin", {
+      studentId: "admin",
+      email: "",
+      passwordHash: hashPassword("admin123", salt),
+      salt,
+      nickname: "管理员",
+      avatar: genAvatar("管理员"),
+      role: "reviewer",
+      status: "verified",
+      createdAt: new Date().toISOString()
+    });
+  }
+  if (!(await users.get("user:student", { type: "json" }))) {
+    const salt = genSalt();
+    await users.setJSON("user:student", {
+      studentId: "student",
+      email: "",
+      passwordHash: hashPassword("student123", salt),
+      salt,
+      nickname: "演示学生",
+      avatar: genAvatar("演示学生"),
+      role: "student",
+      status: "verified",
+      createdAt: new Date().toISOString()
+    });
+  }
 }
 
 // ---------- 会话 ----------
-async function createSession(studentId) {
+async function createSession(stores, studentId) {
   const token = genToken();
-  await SESSIONS_STORE.setJSON(`session:${token}`, {
+  await stores.sessions.setJSON(`session:${token}`, {
     studentId,
     createdAt: Date.now(),
     exp: Date.now() + SESSION_TTL_MS
@@ -161,31 +158,33 @@ async function createSession(studentId) {
   return token;
 }
 
-async function getSessionUser(token) {
+async function getSessionUser(stores, token) {
   if (!token) return null;
-  const session = await SESSIONS_STORE.get(`session:${token}`, { type: "json" });
+  const session = await stores.sessions.get(`session:${token}`, { type: "json" });
   if (!session) return null;
   if (Date.now() > session.exp) return null;
-  const user = await USERS_STORE.get(`user:${session.studentId}`, { type: "json" });
+  const user = await stores.users.get(`user:${session.studentId}`, { type: "json" });
   return user || null;
 }
 
 // ---------- 邮箱查重（遍历用户，演示规模足够） ----------
-async function emailExists(email) {
-  const { blobs } = await USERS_STORE.list();
+async function emailExists(stores, email) {
+  const { users } = stores;
+  const { blobs } = await users.list();
   for (const b of blobs) {
-    const u = await USERS_STORE.get(b.key, { type: "json" });
+    const u = await users.get(b.key, { type: "json" });
     if (u && u.email && u.email.toLowerCase() === email.toLowerCase()) return true;
   }
   return false;
 }
 
 // ---------- 各 action ----------
-async function sendCode(payload) {
+async function sendCode(payload, stores) {
   const email = String(payload.email || "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "邮箱格式不正确" }, { status: 400 });
 
-  const existing = await CODES_STORE.get(`code:${email}`, { type: "json" });
+  const { codes } = stores;
+  const existing = await codes.get(`code:${email}`, { type: "json" });
   const now = Date.now();
   if (existing && now - existing.lastSent < CODE_COOLDOWN_MS) {
     const wait = Math.ceil((CODE_COOLDOWN_MS - (now - existing.lastSent)) / 1000);
@@ -193,7 +192,7 @@ async function sendCode(payload) {
   }
 
   const code = genCode();
-  await CODES_STORE.setJSON(`code:${email}`, { code, lastSent: now, exp: now + CODE_TTL_MS });
+  await codes.setJSON(`code:${email}`, { code, lastSent: now, exp: now + CODE_TTL_MS });
 
   try {
     await sendMail(
@@ -211,7 +210,7 @@ async function sendCode(payload) {
   return json({ ok: true, message: "验证码已发送，请查收邮箱" });
 }
 
-async function register(payload) {
+async function register(payload, stores) {
   const studentId = String(payload.studentId || "").trim();
   const email = String(payload.email || "").trim().toLowerCase();
   const code = String(payload.code || "").trim();
@@ -219,15 +218,16 @@ async function register(payload) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "邮箱格式不正确" }, { status: 400 });
   if (!/^\d{4,}$/.test(code)) return json({ error: "请填写验证码" }, { status: 400 });
 
-  const record = await CODES_STORE.get(`code:${email}`, { type: "json" });
+  const { users, codes } = stores;
+  const record = await codes.get(`code:${email}`, { type: "json" });
   if (!record) return json({ error: "请先获取验证码" }, { status: 400 });
   if (Date.now() > record.exp) return json({ error: "验证码已过期，请重新获取" }, { status: 400 });
   if (record.code !== code) return json({ error: "验证码不正确" }, { status: 400 });
 
-  if (await USERS_STORE.get(`user:${studentId}`, { type: "json" })) {
+  if (await users.get(`user:${studentId}`, { type: "json" })) {
     return json({ error: "该学号已注册" }, { status: 400 });
   }
-  if (await emailExists(email)) {
+  if (await emailExists(stores, email)) {
     return json({ error: "该邮箱已被使用" }, { status: 400 });
   }
 
@@ -244,8 +244,8 @@ async function register(payload) {
     status: "pending",
     createdAt: new Date().toISOString()
   };
-  await USERS_STORE.setJSON(`user:${studentId}`, user);
-  await CODES_STORE.delete(`code:${email}`);
+  await users.setJSON(`user:${studentId}`, user);
+  await codes.delete(`code:${email}`);
 
   try {
     await sendMail(
@@ -263,67 +263,67 @@ async function register(payload) {
   return json({ ok: true, message: "注册成功，密码已发送到你的邮箱" });
 }
 
-async function login(payload) {
+async function login(payload, stores) {
   const studentId = String(payload.studentId || "").trim();
   const password = String(payload.password || "");
   if (!studentId || !password) return json({ error: "请输入学号和密码" }, { status: 400 });
 
-  const user = await USERS_STORE.get(`user:${studentId}`, { type: "json" });
+  const user = await stores.users.get(`user:${studentId}`, { type: "json" });
   if (!user) return json({ error: "学号或密码错误" }, { status: 400 });
   if (user.status === "rejected") return json({ error: "该账号已被禁用" }, { status: 403 });
   if (hashPassword(password, user.salt) !== user.passwordHash) {
     return json({ error: "学号或密码错误" }, { status: 400 });
   }
 
-  const token = await createSession(studentId);
+  const token = await createSession(stores, studentId);
   return json({ ok: true, token, user: publicUser(user) });
 }
 
-async function me(payload) {
-  const user = await getSessionUser(payload.token);
+async function me(payload, stores) {
+  const user = await getSessionUser(stores, payload.token);
   if (!user) return json({ error: "未登录或会话已过期" }, { status: 401 });
   return json({ ok: true, user: publicUser(user) });
 }
 
-async function listUsers(payload) {
-  const caller = await getSessionUser(payload.token);
+async function listUsers(payload, stores) {
+  const caller = await getSessionUser(stores, payload.token);
   if (!caller || caller.role !== "reviewer") return json({ error: "无权限" }, { status: 403 });
-  const { blobs } = await USERS_STORE.list();
-  const users = [];
+  const { users } = stores;
+  const { blobs } = await users.list();
+  const list = [];
   for (const b of blobs) {
-    const u = await USERS_STORE.get(b.key, { type: "json" });
-    if (u && (!payload.status || u.status === payload.status)) users.push(publicUser(u));
+    const u = await users.get(b.key, { type: "json" });
+    if (u && (!payload.status || u.status === payload.status)) list.push(publicUser(u));
   }
-  users.sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
-  return json({ ok: true, users });
+  list.sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+  return json({ ok: true, users: list });
 }
 
-async function verifyUser(payload) {
-  const caller = await getSessionUser(payload.token);
+async function verifyUser(payload, stores) {
+  const caller = await getSessionUser(stores, payload.token);
   if (!caller || caller.role !== "reviewer") return json({ error: "无权限" }, { status: 403 });
-  const user = await USERS_STORE.get(`user:${payload.studentId}`, { type: "json" });
+  const user = await stores.users.get(`user:${payload.studentId}`, { type: "json" });
   if (!user) return json({ error: "用户不存在" }, { status: 404 });
-  const ok = payload.decision === "reject" ? "rejected" : "verified";
-  user.status = ok;
-  await USERS_STORE.setJSON(`user:${payload.studentId}`, user);
+  user.status = payload.decision === "reject" ? "rejected" : "verified";
+  await stores.users.setJSON(`user:${payload.studentId}`, user);
   return json({ ok: true, user: publicUser(user) });
 }
 
-async function addReviewer(payload) {
-  const caller = await getSessionUser(payload.token);
+async function addReviewer(payload, stores) {
+  const caller = await getSessionUser(stores, payload.token);
   if (!caller || caller.role !== "reviewer") return json({ error: "无权限" }, { status: 403 });
   const studentId = String(payload.studentId || "").trim();
   const email = String(payload.email || "").trim().toLowerCase();
   if (!studentId) return json({ error: "请填写学号" }, { status: 400 });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "邮箱格式不正确" }, { status: 400 });
-  if (await USERS_STORE.get(`user:${studentId}`, { type: "json" })) {
+  if (await stores.users.get(`user:${studentId}`, { type: "json" })) {
     return json({ error: "该学号已存在" }, { status: 400 });
   }
 
   const password = genRandomPassword();
   const salt = genSalt();
   const nickname = payload.nickname ? String(payload.nickname).trim() : `审核员-${studentId}`;
-  await USERS_STORE.setJSON(`user:${studentId}`, {
+  await stores.users.setJSON(`user:${studentId}`, {
     studentId,
     email,
     passwordHash: hashPassword(password, salt),
@@ -351,20 +351,20 @@ async function addReviewer(payload) {
   return json({ ok: true, message: "审核员已创建，密码已发送到其邮箱" });
 }
 
-async function updateProfile(payload) {
-  const user = await getSessionUser(payload.token);
+async function updateProfile(payload, stores) {
+  const user = await getSessionUser(stores, payload.token);
   if (!user) return json({ error: "未登录或会话已过期" }, { status: 401 });
   const nickname = String(payload.nickname || "").trim();
   if (!nickname) return json({ error: "昵称不能为空" }, { status: 400 });
   if (nickname.length > 20) return json({ error: "昵称最多 20 个字" }, { status: 400 });
   user.nickname = nickname;
   user.avatar = genAvatar(nickname);
-  await USERS_STORE.setJSON(`user:${user.studentId}`, user);
+  await stores.users.setJSON(`user:${user.studentId}`, user);
   return json({ ok: true, user: publicUser(user) });
 }
 
-async function changePassword(payload) {
-  const user = await getSessionUser(payload.token);
+async function changePassword(payload, stores) {
+  const user = await getSessionUser(stores, payload.token);
   if (!user) return json({ error: "未登录或会话已过期" }, { status: 401 });
   const oldPwd = String(payload.oldPassword || "");
   const newPwd = String(payload.newPassword || "");
@@ -376,7 +376,7 @@ async function changePassword(payload) {
   const salt = genSalt();
   user.salt = salt;
   user.passwordHash = hashPassword(newPwd, salt);
-  await USERS_STORE.setJSON(`user:${user.studentId}`, user);
+  await stores.users.setJSON(`user:${user.studentId}`, user);
   return json({ ok: true });
 }
 
@@ -386,7 +386,8 @@ const ACTIONS = {
 };
 
 export default async function handler(request) {
-  await ensureSeed();
+  const stores = blobStores(); // 每次请求重建，避免持有过期令牌
+  await ensureSeed(stores);
   if (request.method !== "POST") {
     return json({ error: "Method not allowed" }, { status: 405 });
   }
@@ -395,7 +396,7 @@ export default async function handler(request) {
     return json({ error: "Invalid action" }, { status: 400 });
   }
   try {
-    return await ACTIONS[payload.action](payload);
+    return await ACTIONS[payload.action](payload, stores);
   } catch (error) {
     return json({ error: "Server error: " + error.message }, { status: 500 });
   }

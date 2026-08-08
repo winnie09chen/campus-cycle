@@ -1,0 +1,2778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23c8192e'/><text x='32' y='32' font-size='38' font-weight='800' fill='%23fff' text-anchor='middle' dominant-baseline='central' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif'>候</text></svg>" />
+  <title>物候</title>
+  <style>
+    :root {
+      --red: #c8192e;
+      --red-dark: #9f1426;
+      --red-soft: #fff1f3;
+      --ink: #20242a;
+      --muted: #68707d;
+      --line: #e6e8ec;
+      --bg: #f7f8fa;
+      --ok: #168a52;
+      --warn: #b56a00;
+      --bad: #b42318;
+      --card: #ffffff;
+      --shadow: 0 16px 40px rgba(32, 36, 42, 0.08);
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-btn: 0 6px 16px rgba(32, 36, 42, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      transition: transform .18s var(--ease), background-color .18s var(--ease), border-color .18s var(--ease), color .18s var(--ease), box-shadow .18s var(--ease);
+    }
+
+    .shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      height: 72px;
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 280px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: var(--red);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 760;
+    }
+
+    .brand-subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 6px;
+      background: #f0f1f3;
+      border-radius: 8px;
+    }
+
+    .tab-btn {
+      border: 0;
+      border-radius: 7px;
+      padding: 10px 24px;
+      color: var(--muted);
+      background: transparent;
+      font-weight: 700;
+      min-width: 112px;
+    }
+
+    .tab-btn:not(.active):hover {
+      color: var(--ink);
+    }
+
+    .tab-btn:active {
+      transform: scale(0.96);
+    }
+
+    .tab-btn.active {
+      color: var(--red);
+      background: white;
+      box-shadow: 0 6px 18px rgba(32, 36, 42, 0.08);
+    }
+
+    .admin-toggle {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-block;
+      transition: transform .18s var(--ease), background-color .18s var(--ease), border-color .18s var(--ease), color .18s var(--ease), box-shadow .18s var(--ease);
+    }
+
+    .admin-toggle:hover {
+      border-color: var(--red);
+      color: var(--red);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-btn);
+    }
+
+    .admin-toggle:active {
+      transform: scale(0.96);
+    }
+
+    .main {
+      width: min(1180px, calc(100% - 64px));
+      margin: 28px auto 40px;
+      flex: 1;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+      animation: fadeInUp .26s var(--ease);
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #ffffff 0%, #fff6f7 100%);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 28px 30px;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      gap: 28px;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 30px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .hero p {
+      margin-top: 10px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 680px;
+    }
+
+    .hero-stat {
+      display: grid;
+      grid-template-columns: repeat(3, 92px);
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .stat {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--red);
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .panel-head h2 {
+      font-size: 18px;
+    }
+
+    .panel-head p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .panel-body {
+      padding: 20px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px 12px;
+      background: white;
+      color: var(--ink);
+      outline: none;
+    }
+
+    .field textarea {
+      min-height: 92px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(200, 25, 46, 0.12);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .primary-btn,
+    .ghost-btn,
+    .danger-btn,
+    .ok-btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-weight: 760;
+      min-height: 42px;
+      will-change: transform;
+    }
+
+    .primary-btn {
+      background: var(--red);
+      color: white;
+      width: 100%;
+    }
+
+    .primary-btn:hover {
+      background: var(--red-dark);
+    }
+
+    .primary-btn:hover,
+    .ghost-btn:hover,
+    .danger-btn:hover,
+    .ok-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-btn);
+    }
+
+    .primary-btn:active,
+    .ghost-btn:active,
+    .danger-btn:active,
+    .ok-btn:active {
+      transform: scale(0.96);
+    }
+
+    .ghost-btn {
+      background: #f2f3f5;
+      color: var(--ink);
+    }
+
+    .danger-btn {
+      background: #fff1f0;
+      color: var(--bad);
+    }
+
+    .ok-btn {
+      background: #ecfdf3;
+      color: var(--ok);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+
+    .chat-box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fafafa;
+      min-height: 138px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .bubble {
+      width: fit-content;
+      max-width: 88%;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .bubble.ai {
+      background: white;
+      border: 1px solid var(--line);
+    }
+
+    .bubble.user {
+      align-self: flex-end;
+      background: var(--red);
+      color: white;
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .quick-actions button {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--muted);
+    }
+
+    .quick-actions button:hover {
+      color: var(--red);
+      border-color: var(--red);
+      transform: translateY(-1px);
+    }
+
+    .quick-actions button:active {
+      transform: scale(0.96);
+    }
+
+    .card-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+    .pager button { padding: 7px 14px; }
+    .pager button:not(:disabled):hover { transform: translateY(-1px); }
+    .pager button:not(:disabled):active { transform: scale(0.96); }
+    .pager button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pager-info { color: var(--muted); font-size: 13px; }
+
+    .item-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: white;
+    }
+
+    .item-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .item-title {
+      font-weight: 780;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .price {
+      color: var(--red);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .tag .rm {
+      margin-left: 5px;
+      cursor: pointer;
+      font-weight: 700;
+      opacity: 0.6;
+    }
+    .tag .rm:hover { opacity: 1; color: var(--red); }
+
+    .tag-editor {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .tag-editor input {
+      flex: 1;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 12px;
+      background: white;
+      outline: none;
+    }
+    .tag-editor input:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(200, 25, 46, 0.12); }
+
+    .tag {
+      border-radius: 999px;
+      background: #f2f3f5;
+      color: #4c5563;
+      padding: 5px 8px;
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .tag.red {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .tag.ok {
+      background: #ecfdf3;
+      color: var(--ok);
+    }
+
+    .tag.warn {
+      background: #fff7e6;
+      color: var(--warn);
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .score {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .score-bar {
+      width: 96px;
+      height: 8px;
+      border-radius: 999px;
+      background: #eceff3;
+      overflow: hidden;
+    }
+
+    .score-bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--red);
+    }
+
+    .report-btn {
+      border: 0;
+      background: transparent;
+      color: var(--bad);
+      font-weight: 700;
+      padding: 6px;
+    }
+
+    .report-btn:hover {
+      color: var(--red-dark);
+    }
+
+    .report-btn:active {
+      transform: scale(0.94);
+    }
+
+    /* 实物图缩略图 */
+    .card-thumb {
+      position: relative;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      background: #f2f3f5;
+    }
+    .card-thumb img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+    }
+    .card-thumb.placeholder {
+      height: 64px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      cursor: default;
+    }
+    .zoom-hint {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    /* 图片放大灯箱 */
+    #imgLightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.86);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      cursor: zoom-out;
+    }
+    #imgLightbox.show { display: flex; }
+    #imgLightbox img {
+      max-width: 92%;
+      max-height: 88%;
+      border-radius: 8px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    /* 物品详情弹窗 */
+    .item-detail-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(32, 36, 42, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 95;
+      padding: 24px 16px;
+    }
+    .item-detail-modal.show {
+      display: flex;
+      animation: fadeIn .2s var(--ease);
+    }
+    .item-detail-modal.show .detail-box {
+      animation: popIn .24s var(--ease);
+    }
+    .detail-box {
+      position: relative;
+      width: min(560px, 100%);
+      max-height: 88vh;
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+    }
+    .detail-close {
+      position: absolute;
+      top: 10px; right: 12px;
+      border: 0; background: transparent;
+      font-size: 26px; line-height: 1;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .18s var(--ease), transform .18s var(--ease);
+    }
+    .detail-close:hover { color: var(--red); transform: scale(1.1); }
+    .detail-image {
+      width: 100%;
+      max-height: 340px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      cursor: zoom-in;
+      background: #f2f3f5;
+    }
+    .detail-title { font-size: 20px; font-weight: 780; margin: 0 0 4px; }
+    .detail-meta { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+    .detail-price { color: var(--red); font-weight: 800; font-size: 22px; margin-bottom: 14px; }
+    .detail-row { margin-bottom: 12px; }
+    .detail-label {
+      display: inline-block;
+      min-width: 64px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .detail-condition { font-weight: 760; color: var(--ink); }
+    .detail-text { display: inline; margin: 0; color: var(--ink); line-height: 1.7; font-size: 14px; }
+    .detail-tags { display: flex; flex-wrap: wrap; gap: 7px; margin: 4px 0 12px; }
+    .detail-contact { color: var(--muted); font-size: 13px; }
+
+    /* 摄像头拍摄浮层 */
+    .camera-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 110;
+    }
+    .camera-modal.show {
+      display: flex;
+      animation: fadeIn .2s var(--ease);
+    }
+    .camera-modal.show .camera-box {
+      animation: popIn .24s var(--ease);
+    }
+    .camera-box {
+      width: min(640px, 92%);
+      background: #111;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
+    #cameraVideo {
+      width: 100%;
+      max-height: 60vh;
+      border-radius: 8px;
+      background: #000;
+      display: block;
+      transform: scaleX(-1); /* 镜像，更符合直觉 */
+    }
+    .camera-tip {
+      color: #ffd2d2;
+      font-size: 13px;
+      text-align: center;
+      margin: 8px 0;
+      min-height: 18px;
+    }
+    .camera-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .camera-actions .primary-btn,
+    .camera-actions .ghost-btn {
+      flex: 1;
+      padding: 11px;
+    }
+
+    .aid-hero {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .aid-hero p {
+      color: var(--muted);
+      line-height: 1.7;
+      margin-top: 8px;
+    }
+
+    .aid-summary {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .aid-summary .mini-stat strong {
+      color: var(--red);
+      font-size: 20px;
+    }
+
+    .aid-card {
+      border-left: 4px solid var(--red);
+    }
+
+    .aid-card.done {
+      border-left-color: var(--ok);
+    }
+
+    .aid-match {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .aid-match.locked {
+      border-color: #b7ebc6;
+      background: #f5fbf7;
+    }
+
+    .aid-match strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .aid-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .aid-actions .primary-btn,
+    .aid-actions .ghost-btn,
+    .aid-actions .ok-btn,
+    .aid-actions .danger-btn {
+      width: auto;
+      min-height: 36px;
+      padding: 8px 12px;
+    }
+
+    .seller-demand-panel {
+      margin-top: 20px;
+    }
+
+    .demand-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .demand-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 164px;
+    }
+
+    .demand-card .description {
+      flex: 1;
+    }
+
+    .impact-note {
+      border: 1px solid #d6eadf;
+      background: #f5fbf7;
+      color: #276749;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-top: 12px;
+    }
+
+    .privacy-note {
+      border: 1px solid #d6eadf;
+      background: #f5fbf7;
+      color: #276749;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .upload-area {
+      border: 1.5px dashed #d6d9df;
+      border-radius: 8px;
+      min-height: 230px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 20px;
+      background: #fafafa;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-area img {
+      width: 100%;
+      height: 230px;
+      object-fit: cover;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .upload-copy strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    .upload-copy span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .upload-area.has-image .upload-copy {
+      display: none;
+    }
+
+    .upload-area.has-image img {
+      display: block;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .result-box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fafafa;
+      padding: 14px;
+      margin-top: 14px;
+    }
+
+    /* 手部遮挡 → 重拍横幅 */
+    .retake-banner {
+      display: none;
+      align-items: center;
+      gap: 14px;
+      background: #fff1f0;
+      border: 1px solid #ffccc7;
+      border-radius: 10px;
+      padding: 18px 16px;
+      margin-bottom: 12px;
+    }
+    .retake-banner.show { display: flex; }
+    .retake-icon { font-size: 30px; }
+    .retake-title { font-size: 16px; font-weight: 800; color: var(--bad); }
+    .retake-reason { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    /* 手动修正类别卡片 */
+    .manual-fix {
+      display: none;
+      background: #fff7f8;
+      border: 1px solid #ffe0e4;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+    .manual-fix.show { display: block; }
+    .manual-fix-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      color: var(--red);
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .manual-fix-row { display: flex; gap: 8px; }
+    .manual-fix-row input,
+    .manual-fix-row select {
+      flex: 1;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fff;
+      outline: none;
+    }
+    .manual-fix-row input:focus,
+    .manual-fix-row select:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(200, 25, 46, 0.12); }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .mini-stat {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .mini-stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .mini-stat strong {
+      font-size: 15px;
+    }
+
+    .description {
+      color: #3b424c;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .admin-panel {
+      display: none;
+      margin-top: 22px;
+    }
+
+    .admin-panel.active {
+      display: block;
+      animation: fadeInUp .26s var(--ease);
+    }
+
+    .review-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .review-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 30px 12px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    @media (max-width: 960px) {
+      .topbar {
+        height: auto;
+        padding: 18px;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+
+      .brand {
+        min-width: 0;
+      }
+
+      .main {
+        width: min(100% - 28px, 760px);
+      }
+
+      .hero,
+      .aid-hero,
+      .grid,
+      .review-layout,
+      .demand-list {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .hero-stat {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">候</div>
+        <div>
+          <div class="brand-title">物候</div>
+          <div class="brand-subtitle">万物有时，静候良人</div>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="身份切换">
+        <button class="tab-btn active" data-tab="buyer">我要买</button>
+        <button class="tab-btn" data-tab="seller">我要卖</button>
+        <button class="tab-btn" data-tab="aid">援助池</button>
+      </nav>
+      <a class="admin-toggle" href="reviewer.html" target="_blank">审核员入口</a>
+    </header>
+
+    <main class="main">
+      <section class="hero">
+        <div>
+          <h1>让毕业闲置流向真正需要的人</h1>
+        </div>
+        <div class="hero-stat">
+          <div class="stat"><strong id="statItems">0</strong><span>在架物品</span></div>
+          <div class="stat"><strong id="statDemands">0</strong><span>需求记录</span></div>
+          <div class="stat"><strong id="statReview">0</strong><span>待审核</span></div>
+        </div>
+      </section>
+
+      <section class="page active" id="buyerPage">
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>买家需求确认</h2>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chat-box" id="buyerChat">
+                <div class="bubble ai">你想找什么？可以直接说“求一本大一下高数书，最好有笔记，20元以内”。</div>
+              </div>
+              <div class="quick-actions">
+                <button data-template="求一本高等数学教材，最好有笔记，20元以内">高数教材</button>
+                <button data-template="想买一套干净的校服，尺码L，50元以内">校服套装</button>
+                <button data-template="求台灯，宿舍学习用，30元以内">宿舍台灯</button>
+              </div>
+              <div class="field">
+                <label for="demandText">需求描述 <span style="color:var(--red);font-weight:400;">必填</span></label>
+                <textarea id="demandText" placeholder="输入你的求购需求"></textarea>
+              </div>
+              <div class="two-col">
+                <div class="field">
+                  <label for="buyerMajor">专业 <span style="color:var(--muted);font-weight:400;">选填</span></label>
+                  <input id="buyerMajor" placeholder="如：计算机" />
+                </div>
+                <div class="field">
+                  <label for="buyerPrice">最高预算 <span style="color:var(--muted);font-weight:400;">选填</span></label>
+                  <input id="buyerPrice" type="number" min="0" placeholder="如：20" />
+                </div>
+              </div>
+              <div class="result-box">
+                <div class="result-grid">
+                  <div class="mini-stat"><span>解析方式</span><strong id="buyerParseMode">待解析</strong></div>
+                  <div class="mini-stat"><span>解析类别</span><strong id="buyerParsedCategory">-</strong></div>
+                  <div class="mini-stat"><span>预算</span><strong id="buyerParsedBudget">-</strong></div>
+                </div>
+                <p class="hint" id="buyerParseStatus">输入需求后自动解析并匹配在架物品。</p>
+              </div>
+              <p id="demandError" style="color:var(--red);font-size:13px;margin:0 0 8px;display:none;">请先填写需求描述再确认匹配。</p>
+              <button class="primary-btn" id="submitDemand">确认需求并匹配</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>推荐结果</h2>
+                <p>仅展示已通过审核的物品，被举报/下架的不会进入推荐</p>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="field" style="margin-bottom:12px;position:relative;">
+                <input id="searchInput" type="text" placeholder="搜索物品名称、ID、描述、标签…" style="width:100%;" />
+                <div id="searchSuggestions" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;display:none;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,0.1);"></div>
+              </div>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-bottom:12px;cursor:pointer;user-select:none;">
+                <input type="checkbox" id="favFilter" /> 仅显示收藏的物品
+              </label>
+              <div class="card-list" id="buyerResults"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="sellerPage">
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>卖家照片上传</h2>
+              </div>
+            </div>
+            <div class="panel-body">
+              <label class="upload-area" for="photoInput" id="uploadArea">
+                <img id="previewImage" alt="上传预览" />
+                <div class="upload-copy">
+                  <strong>点击上传物品照片</strong>
+                  <span>支持教材、校服、台灯等毕业闲置</span>
+                </div>
+              </label>
+              <input class="file-input" id="photoInput" type="file" accept="image/*" />
+              <button type="button" class="ghost-btn" id="cameraBtn" style="width:100%;margin-bottom:14px;">📷 现场拍摄</button>
+              <div class="two-col">
+                <div class="field">
+                  <label for="sellerPrice">期望价格</label>
+                  <input id="sellerPrice" type="number" min="0" value="18" />
+                </div>
+                <div class="field">
+                  <label for="sellerCampus">校区/宿舍区</label>
+                  <input id="sellerCampus" value="闵行校区" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="sellerSubject">物品名称/科目</label>
+                <input id="sellerSubject" placeholder="如：高等数学（留空则按识别类别命名）" />
+              </div>
+              <div class="two-col">
+                <div class="field">
+                  <label for="sellerPhone">手机号 <span style="color:var(--red);font-weight:400;">（选填，至少填一项）</span></label>
+                  <input id="sellerPhone" placeholder="如：13800138000" />
+                </div>
+                <div class="field">
+                  <label for="sellerEmail">邮箱 <span style="color:var(--red);font-weight:400;">（选填，至少填一项）</span></label>
+                  <input id="sellerEmail" placeholder="如：student@example.com" />
+                </div>
+              </div>
+              <button class="primary-btn" id="analyzeItem">生成物品信息</button>
+              <div class="manual-fix" id="manualCategoryWrap">
+                <div class="manual-fix-head">✏️ 识别不准？手动修正类别</div>
+                <div class="manual-fix-row" style="margin-bottom:8px;">
+                  <input id="manualSubject" placeholder="手动输入物品名称/科目，如：线性代数教材" />
+                </div>
+                <div class="manual-fix-row">
+                  <select id="manualCategory">
+                    <option value="book">教材</option>
+                    <option value="uniform">校服/正装</option>
+                    <option value="bottle">水杯</option>
+                    <option value="lamp">台灯</option>
+                    <option value="backpack">书包</option>
+                    <option value="digital">数码配件</option>
+                    <option value="custom">其他</option>
+                  </select>
+                  <button class="primary-btn" id="regenerateBtn" style="width:auto;white-space:nowrap;">重新生成</button>
+                </div>
+                <div class="manual-fix-row" style="margin-top:8px;">
+                  <input id="manualCategoryText" placeholder="如果选其他，输入自定义类别，如：乐器、运动器材" />
+                </div>
+              </div>
+              <p class="hint" id="analyzeHint"></p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>识别与发布</h2>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="result-box" id="sellerResult">
+                <div class="retake-banner" id="retakeBanner">
+                  <div class="retake-icon">📷</div>
+                  <div>
+                    <div class="retake-title">请重新拍摄</div>
+                    <div class="retake-reason" id="retakeReason"></div>
+                  </div>
+                </div>
+                <div class="result-grid" id="resultGrid">
+                  <div class="mini-stat"><span>类别</span><strong id="resultCategory">待识别</strong></div>
+                  <div class="mini-stat"><span>置信度</span><strong id="resultConfidence">-</strong></div>
+                  <div class="mini-stat"><span>成色评分</span><strong id="resultScore">-</strong></div>
+                </div>
+                <div class="field">
+                  <label for="resultDescription">AI 生成文案（可手动修改）</label>
+                  <textarea id="resultDescription" placeholder="上传照片后，这里会出现 AI 生成的物品描述、瑕疵提示和交易建议。" style="min-height:100px;"></textarea>
+                </div>
+                <div class="tags" id="resultTags"></div>
+                <div class="tag-editor" id="tagEditor" style="display:none;">
+                  <input id="tagInput" placeholder="输入标签后回车添加，如：包邮、可议价、自提" />
+                  <button type="button" class="ghost-btn" id="addTagBtn" style="padding:9px 16px;">添加标签</button>
+                </div>
+              </div>
+              <!-- 新旧程度评估区域 -->
+              <div class="result-box" style="margin-top:14px;">
+                <div class="field">
+                  <label for="conditionLevel">AI 评估新旧程度（可手动修改）</label>
+                  <select id="conditionLevel">
+                    <option value="全新">全新</option>
+                    <option value="九成新" selected>九成新</option>
+                    <option value="八成新">八成新</option>
+                    <option value="七成新">七成新</option>
+                    <option value="五成新以下">五成新以下</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="conditionDetail">AI 评估细节说明（可手动修改）</label>
+                  <textarea id="conditionDetail" placeholder="AI 会根据图片分析物品的磨损、污渍、功能状态等细节" style="min-height:70px;"></textarea>
+                </div>
+              </div>
+              <div class="two-col" style="margin-top: 14px;">
+                <button class="ghost-btn" id="saveDraft">保存草稿</button>
+                <button class="primary-btn" id="submitItem">提交审核</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel seller-demand-panel">
+          <div class="panel-head">
+            <div>
+              <h2>未匹配到的历史需求</h2>
+              <p>这些真实需求暂时没有合适在架物品，卖家可以优先发布对应教材或物资</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="demand-list" id="sellerUnmatchedDemands"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="aidPage">
+        <div class="aid-hero">
+          <div>
+            <h2>校园困难生定向援助池</h2>
+            <p>面向经班级、学院或资助体系确认的困难学生，收集教材、校服、台灯等刚需申请，并从已审核物品中优先匹配低价、免费或公益物品。</p>
+          </div>
+          <div class="aid-summary">
+            <div class="mini-stat"><span>待跟进申请</span><strong id="aidPending">0</strong></div>
+            <div class="mini-stat"><span>已完成援助</span><strong id="aidDone">0</strong></div>
+            <div class="mini-stat"><span>可援助物品</span><strong id="aidAvailable">0</strong></div>
+            <div class="mini-stat"><span>锁定中物品</span><strong id="aidLocked">0</strong></div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>提交定向援助需求</h2>
+                <p>脱敏登记，提交后自动匹配可援助物品</p>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="privacy-note">建议由班主任、辅导员或资助委员代填；演示版只展示脱敏编号，正式系统应由后端保存敏感信息。</div>
+              <div class="two-col">
+                <div class="field">
+                  <label for="aidCode">学生脱敏编号</label>
+                  <input id="aidCode" placeholder="如：CS-2026-017" />
+                </div>
+                <div class="field">
+                  <label for="aidVerifier">确认来源</label>
+                  <select id="aidVerifier">
+                    <option value="辅导员确认">辅导员确认</option>
+                    <option value="班主任确认">班主任确认</option>
+                    <option value="学院资助体系确认">学院资助体系确认</option>
+                  </select>
+                </div>
+              </div>
+              <div class="two-col">
+                <div class="field">
+                  <label for="aidCategory">所需类型</label>
+                  <select id="aidCategory">
+                    <option value="book">教材</option>
+                    <option value="uniform">校服/正装</option>
+                    <option value="lamp">台灯</option>
+                    <option value="backpack">书包</option>
+                    <option value="bottle">水杯</option>
+                    <option value="digital">数码配件</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="aidUrgency">紧急程度</label>
+                  <select id="aidUrgency">
+                    <option value="本周内">本周内</option>
+                    <option value="两周内">两周内</option>
+                    <option value="开学前">开学前</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="aidBudget">可接受最高价格</label>
+                <input id="aidBudget" type="number" min="0" value="20" />
+              </div>
+              <div class="field">
+                <label for="aidNeedText">具体需求</label>
+                <textarea id="aidNeedText" placeholder="如：大一高等数学教材，可接受有笔记；希望免费或低价援助。"></textarea>
+              </div>
+              <div class="result-box">
+                <div class="result-grid">
+                  <div class="mini-stat"><span>解析方式</span><strong id="aidParseMode">待解析</strong></div>
+                  <div class="mini-stat"><span>解析类型</span><strong id="aidParsedCategory">-</strong></div>
+                  <div class="mini-stat"><span>贡献提示</span><strong id="aidContributionStatus">待生成</strong></div>
+                </div>
+                <p class="hint" id="aidParseStatus">提交后会复用 Qwen API 解析援助需求，并自动修正类型、预算和紧急程度。</p>
+              </div>
+              <button class="primary-btn" id="submitAidNeed">提交援助需求并匹配</button>
+              <p class="hint">流程：提交需求 → 系统推荐 → 锁定物品 → 完成援助；锁定后该物品不会再进入普通买家推荐。</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>援助申请与匹配</h2>
+                <p>按紧急程度和匹配度排序，便于老师或志愿者跟进</p>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="card-list" id="aidList"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- 图片放大灯箱 -->
+    <div id="imgLightbox"><img id="lightboxImg" alt="实物大图" /></div>
+    <!-- 物品详情弹窗（买家页点击缩略图） -->
+    <div id="itemDetailModal" class="item-detail-modal">
+      <div class="detail-box">
+        <button class="detail-close" id="itemDetailClose" aria-label="关闭">&times;</button>
+        <img id="detailImage" class="detail-image" alt="实物大图" />
+        <h3 id="detailTitle" class="detail-title"></h3>
+        <div id="detailMeta" class="detail-meta"></div>
+        <div id="detailPrice" class="detail-price"></div>
+        <div class="detail-row"><span class="detail-label">成色</span><span id="detailCondition" class="detail-condition"></span></div>
+        <div class="detail-row"><span class="detail-label">细节描述</span><p id="detailDescription" class="detail-text"></p></div>
+        <div id="detailTags" class="detail-tags"></div>
+        <div id="detailContact" class="detail-contact"></div>
+      </div>
+    </div>
+    <!-- 摄像头拍摄浮层 -->
+    <div id="cameraModal" class="camera-modal">
+      <div class="camera-box">
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        <p class="camera-tip" id="cameraTip"></p>
+        <div class="camera-actions">
+          <button type="button" class="primary-btn" id="cameraCapture">拍摄</button>
+          <button type="button" class="ghost-btn" id="cameraCancel">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全局配置（必须在所有模块之前加载） -->
+  <script src="./config.js"></script>
+  <!-- 手部遮挡检测（MediaPipe） -->
+  <script src="./vision-module.js"></script>
+  <!-- NLP 文案生成 + 需求解析 + VLM 视觉语言 -->
+  <script src="./nlp-module.js"></script>
+  <script src="./vlm-module.js"></script>
+
+  <script>
+    const STORAGE_KEY = (window.AppConfig && window.AppConfig.storageKeys && window.AppConfig.storageKeys.data) || "campus_cycle_demo_v1";
+
+    const seedData = {
+      items: [
+        {
+          id: "item-1",
+          title: "高等数学上册",
+          category: "book",
+          subject: "高等数学",
+          major: "通识",
+          price: 16,
+          conditionScore: 88,
+          confidence: 0.93,
+          status: "approved",
+          reports: 0,
+          tags: ["有笔记", "封面轻微折角", "适合大一"],
+          description: "高等数学上册，内页完整，前几章有铅笔笔记，适合想提前预习或复习的同学。"
+        },
+        {
+          id: "item-2",
+          title: "夏季校服套装",
+          category: "uniform",
+          subject: "校服",
+          major: "不限",
+          price: 45,
+          conditionScore: 91,
+          confidence: 0.86,
+          status: "approved",
+          reports: 0,
+          tags: ["尺码L", "已清洗", "无明显污渍"],
+          description: "夏季校服套装，整体干净，适合临时补备用校服或活动穿着。"
+        },
+        {
+          id: "item-3",
+          title: "宿舍护眼台灯",
+          category: "lamp",
+          subject: "台灯",
+          major: "不限",
+          price: 28,
+          conditionScore: 83,
+          confidence: 0.78,
+          status: "approved",
+          reports: 1,
+          tags: ["亮度可调", "底座有划痕"],
+          description: "宿舍学习台灯，亮度可调，底座有少量使用痕迹，功能正常。"
+        },
+        {
+          id: "item-4",
+          title: "线性代数教材",
+          category: "book",
+          subject: "线性代数",
+          major: "计算机",
+          price: 12,
+          conditionScore: 76,
+          confidence: 0.9,
+          status: "pending",
+          reports: 0,
+          tags: ["有划线", "待审核"],
+          description: "线性代数教材，适合计算机和工科同学，部分章节有划线。"
+        }
+      ],
+      demands: [
+        {
+          id: "demand-1",
+          text: "求一本大一下高等数学，最好有笔记，20元以内",
+          category: "book",
+          subject: "高等数学",
+          major: "计算机",
+          priceMax: 20,
+          wantsNotes: true
+        }
+      ],
+      aidNeeds: [],
+      currentDraft: null
+    };
+
+    function loadData() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
+        return structuredClone(seedData);
+      }
+      const parsed = JSON.parse(stored);
+      return {
+        ...parsed,
+        items: Array.isArray(parsed.items) ? parsed.items : seedData.items,
+        demands: Array.isArray(parsed.demands) ? parsed.demands : seedData.demands,
+        aidNeeds: Array.isArray(parsed.aidNeeds) ? parsed.aidNeeds : seedData.aidNeeds,
+        currentDraft: parsed.currentDraft || null
+      };
+    }
+
+    function stripStoredImages(value) {
+      return {
+        ...value,
+        items: (value.items || []).map((item) => ({
+          ...item,
+          image: item.image && !String(item.image).startsWith("data:") ? item.image : ""
+        })),
+        currentDraft: value.currentDraft ? { ...value.currentDraft, image: "" } : null
+      };
+    }
+
+    const REMOTE_DATA_URL = "/.netlify/functions/data";
+    const REMOTE_IMAGE_URL = "/.netlify/functions/image";
+    const REMOTE_SYNC_MS = 3000;
+    let remoteSyncReady = false;
+    let remoteSnapshot = "";
+    let remoteSaving = false;
+
+    function normalizeData(value) {
+      return {
+        ...value,
+        items: Array.isArray(value.items) ? value.items : seedData.items,
+        demands: Array.isArray(value.demands) ? value.demands : seedData.demands,
+        aidNeeds: Array.isArray(value.aidNeeds) ? value.aidNeeds : seedData.aidNeeds,
+        currentDraft: value.currentDraft || null
+      };
+    }
+
+    async function fetchRemoteData() {
+      if (location.protocol === "file:") return null;
+      const response = await fetch(REMOTE_DATA_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error("远程数据读取失败：" + response.status);
+      const payload = await response.json();
+      return payload && payload.data ? normalizeData(payload.data) : null;
+    }
+
+    async function pushRemoteData(value) {
+      if (location.protocol === "file:") return;
+      remoteSaving = true;
+      try {
+        const clean = stripStoredImages(value);
+        const body = JSON.stringify(clean);
+        remoteSnapshot = body;
+        const response = await fetch(REMOTE_DATA_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body
+        });
+        if (!response.ok) throw new Error("远程数据保存失败：" + response.status);
+      } catch (error) {
+        console.warn("远程同步失败，已保留本地数据：", error.message);
+      } finally {
+        remoteSaving = false;
+      }
+    }
+
+    async function uploadRemoteImage(item) {
+      if (!item || !item.image || !String(item.image).startsWith("data:") || location.protocol === "file:") return item;
+      try {
+        const imageId = item.imageId || `${item.id}-image`;
+        const response = await fetch(REMOTE_IMAGE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: imageId, image: item.image })
+        });
+        if (!response.ok) throw new Error("图片上传失败：" + response.status);
+        const payload = await response.json();
+        return { ...item, imageId, image: payload.url || `${REMOTE_IMAGE_URL}?id=${encodeURIComponent(imageId)}` };
+      } catch (error) {
+        console.warn("图片远程保存失败，发布数据会继续同步但跨设备可能看不到图：", error.message);
+        return item;
+      }
+    }
+
+    function saveData(data) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (error) {
+        console.warn("localStorage 写入失败，已移除图片后重试：", error.message);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stripStoredImages(data)));
+      }
+      renderAll();
+      pushRemoteData(data);
+    }
+
+    let data = loadData();
+    let selectedImageData = "";
+    // 买家列表分页状态
+    let buyerDemandList = null; // 非 null 表示当前按某次需求匹配后的排序列表
+    let lastDemand = null;      // 最近一次需求，用于跨页刷新时重跑匹配
+    let buyerPage = 0;
+    const BUYER_PAGE_SIZE = (window.AppConfig && window.AppConfig.ui && window.AppConfig.ui.buyerPageSize) || 6;
+
+    const categoryMap = (window.AppConfig && window.AppConfig.categories && window.AppConfig.categories.labels) || {
+      book: "教材",
+      uniform: "校服",
+      lamp: "台灯",
+      backpack: "书包",
+      bottle: "水杯",
+      clothing: "校服/正装",
+      digital: "数码配件",
+      custom: "其他"
+    };
+
+    function getCategoryLabel(itemOrCategory) {
+      if (typeof itemOrCategory === "object" && itemOrCategory) {
+        return itemOrCategory.customCategory || categoryMap[itemOrCategory.category] || itemOrCategory.category || "其他";
+      }
+      return categoryMap[itemOrCategory] || itemOrCategory || "其他";
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    const demoDetections = [
+      { category: "book", subject: "高等数学", confidence: 0.94, defects: ["封面折角"], conditionScore: 86, tags: ["有笔记", "轻微折角"], conditionLevel: "八成新", conditionDetail: "封面有轻微折角，内页完整，前几章有铅笔笔记，不影响阅读。功能完好，适合大一新生使用。" },
+      { category: "uniform", subject: "校服", confidence: 0.88, defects: ["袖口轻微磨损"], conditionScore: 89, tags: ["已清洗", "尺码L"], conditionLevel: "九成新", conditionDetail: "袖口有轻微磨损痕迹，已清洗干净，整体整洁无明显污渍，尺码L，适合日常穿着。" },
+      { category: "lamp", subject: "台灯", confidence: 0.82, defects: ["底座划痕"], conditionScore: 81, tags: ["亮度可调", "功能正常"], conditionLevel: "八成新", conditionDetail: "底座有轻微划痕，不影响使用。亮度可三档调节，灯光柔和护眼，适合宿舍学习使用。" }
+    ];
+
+    function setTab(tabName) {
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.tab === tabName);
+      });
+      document.getElementById("buyerPage").classList.toggle("active", tabName === "buyer");
+      document.getElementById("sellerPage").classList.toggle("active", tabName === "seller");
+      document.getElementById("aidPage").classList.toggle("active", tabName === "aid");
+    }
+
+    function parseDemandFallback(text) {
+      const priceMatch = text.match(/(\d+)\s*元?/);
+      const category = /充电宝|移动电源|耳机|数据线|鼠标|键盘|数码|电子/.test(text)
+        ? "digital"
+        : text.includes("校服") ? "uniform" : text.includes("台灯") ? "lamp" : "book";
+      const subject = text.includes("线代") || text.includes("线性代数")
+        ? "线性代数"
+        : text.includes("校服")
+          ? "校服"
+          : text.includes("台灯")
+            ? "台灯"
+            : /充电宝|移动电源/.test(text)
+              ? "充电宝"
+              : /耳机/.test(text)
+                ? "耳机"
+                : /数据线/.test(text)
+                  ? "数据线"
+                  : "高等数学";
+      return {
+        category,
+        subject,
+        wantsNotes: /笔记|划线|重点/.test(text),
+        priceMax: priceMatch ? Number(priceMatch[1]) : 30
+      };
+    }
+
+    function matchItems(demand) {
+      return data.items
+        .filter((item) => item.status === "approved" && item.aidStatus !== "locked" && item.aidStatus !== "donated")
+        .map((item) => {
+          const W = (window.AppConfig && window.AppConfig.scoring) || {};
+          let score = 0;
+          if (item.category === demand.category) score += (W.category || 40);
+          // 科目匹配改为双向“包含”
+          if (
+            (item.subject && demand.subject && (item.subject.includes(demand.subject) || demand.subject.includes(item.subject)))
+          ) score += (W.subject || 30);
+          if (item.price <= demand.priceMax) score += (W.price || 20);
+          if (demand.wantsNotes && item.tags.some((tag) => tag.includes("笔记"))) score += (W.notes || 10);
+          if (item.reports === 0) score += (W.noReport || 5);
+          return { ...item, matchScore: Math.min(score, 100) };
+        })
+        .sort((a, b) => b.matchScore - a.matchScore);
+    }
+
+    function getStrongMatches(demand) {
+      return matchItems(demand).filter((item) => item.matchScore >= 60);
+    }
+
+    function getUnmatchedDemands() {
+      return (data.demands || [])
+        .filter((demand) => !getStrongMatches(demand).length)
+        .slice(0, 6);
+    }
+
+    function parseAidNeedFallback(text) {
+      const parsed = parseDemandFallback(text);
+      let urgency = "两周内";
+      if (/急|尽快|马上|本周|一周|7天|七天/.test(text)) urgency = "本周内";
+      else if (/开学|报到|入学前/.test(text)) urgency = "开学前";
+      return {
+        category: parsed.category,
+        subject: parsed.subject,
+        wantsNotes: parsed.wantsNotes,
+        budgetMax: parsed.priceMax || 20,
+        urgency,
+        contributionHint: "这条援助申请会帮助平台发现真实缺口，提醒卖家优先上架对应的低价或公益物品。"
+      };
+    }
+
+    function isAidCandidate(item) {
+      return item.status === "approved" && item.aidStatus !== "locked" && item.aidStatus !== "donated";
+    }
+
+    function matchAidItems(need) {
+      const W = (window.AppConfig && window.AppConfig.scoring) || {};
+      return data.items
+        .filter(isAidCandidate)
+        .map((item) => {
+          let score = 0;
+          const reasons = [];
+          const tags = item.tags || [];
+          if (item.category === need.category) {
+            score += (W.aidCategory || 45);
+            reasons.push("类型匹配");
+          }
+          if (item.price === 0 || tags.some((tag) => /公益|援助|免费/.test(tag))) {
+            score += (W.aidFree || 30);
+            reasons.push("公益优先");
+          } else if (item.price <= Number(need.budgetMax || 20)) {
+            score += (W.aidLowPrice || 20);
+            reasons.push("预算内");
+          }
+          if (need.urgency === "本周内") {
+            score += (W.aidUrgent || 10);
+            reasons.push("紧急优先");
+          }
+          if (item.reports === 0) {
+            score += (W.noReport || 5);
+            reasons.push("无举报");
+          }
+          return { ...item, matchScore: Math.min(score, 100), matchReasons: reasons };
+        })
+        .filter((item) => item.matchScore > 0)
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 3);
+    }
+
+    function renderItemCard(item, options = {}) {
+      const statusText = item.status === "approved" ? "已通过" : item.status === "removed" ? "已下架" : "待审核";
+      const statusClass = item.status === "approved" ? "ok" : item.status === "removed" ? "warn" : "red";
+      const reportAction = options.allowReport
+        ? `<button class="report-btn" data-report="${item.id}">举报</button>`
+        : "";
+      const isFav = isFavorite(item.id);
+      const favBtn = options.allowReport
+        ? `<span class="fav-btn" data-fav="${item.id}" style="cursor:pointer;font-size:18px;user-select:none;">${isFav ? "❤️" : "🤍"}</span>`
+        : "";
+      const thumb = item.image
+        ? `<div class="card-thumb" data-detail="${item.id}"><img src="${item.image}" alt="实物图" /><span class="zoom-hint">🔍 点击查看详情</span></div>`
+        : `<div class="card-thumb placeholder" data-detail="${item.id}">暂无实物图</div>`;
+      return `
+        <article class="item-card">
+          ${thumb}
+          <div class="item-top">
+            <div>
+              <div class="item-title">${item.title}</div>
+              <div class="meta">${getCategoryLabel(item)} · ${item.major} · ${item.subject}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="price">￥${item.price}</div>
+              ${favBtn}
+            </div>
+          </div>
+          <p class="description">${item.description}</p>
+          <div class="tags">
+            ${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
+            <span class="tag ${statusClass}">${statusText}</span>
+            ${item.reports > 0 ? `<span class="tag warn">${item.reports} 次举报</span>` : ""}
+            ${item.phone ? `<span class="tag">📞 ${item.phone}</span>` : ""}
+            ${item.email ? `<span class="tag">📧 ${item.email}</span>` : ""}
+          </div>
+          <div class="status-row">
+            <div class="score">
+              <span>匹配度 ${Math.min(item.matchScore ?? item.conditionScore, 100)}%</span>
+              <div class="score-bar"><span style="width: ${Math.min(item.matchScore ?? item.conditionScore, 100)}%"></span></div>
+            </div>
+            ${reportAction}
+          </div>
+        </article>
+      `;
+    }
+
+    // ===== 搜索功能 =====
+    const SEARCH_HISTORY_KEY = "campus_cycle_search_history_v1";
+    function getSearchHistory() {
+      try {
+        const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+    function saveSearchHistory(keyword) {
+      if (!keyword || keyword.length < 2) return;
+      let history = getSearchHistory();
+      history = history.filter((h) => h !== keyword);
+      history.unshift(keyword);
+      if (history.length > 10) history = history.slice(0, 10);
+      try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history)); } catch (e) {}
+    }
+    function clearSearchHistory() {
+      try { localStorage.removeItem(SEARCH_HISTORY_KEY); } catch (e) {}
+    }
+
+    // ===== 收藏功能 =====
+    const FAVORITE_KEY = "campus_cycle_favorites_v1";
+    function getFavorites() {
+      try {
+        const raw = localStorage.getItem(FAVORITE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+    function isFavorite(id) {
+      return getFavorites().includes(id);
+    }
+    function toggleFavorite(id) {
+      let favs = getFavorites();
+      if (favs.includes(id)) {
+        favs = favs.filter((fid) => fid !== id);
+      } else {
+        favs.push(id);
+      }
+      try { localStorage.setItem(FAVORITE_KEY, JSON.stringify(favs)); } catch (e) {}
+      renderBuyerResults(); // 刷新列表以更新心形状态
+    }
+
+    function filterItemsByKeyword(keyword) {
+      if (!keyword || keyword.length < 2) return null;
+      const kw = keyword.toLowerCase();
+      const approved = data.items.filter((item) => item.status === "approved" && item.aidStatus !== "locked" && item.aidStatus !== "donated");
+      return approved.filter((item) => {
+        const haystack = [
+          item.title, item.subject, item.description,
+          item.id, item.major, item.campus, item.category,
+          String(item.price), String(item.conditionScore),
+          ...(item.tags || [])
+        ].join(" ").toLowerCase();
+        // 拆单字匹配，不要求顺序
+        const chars = [...new Set([...kw])];
+        return chars.every((ch) => haystack.includes(ch));
+      });
+    }
+
+    function showSearchSuggestions() {
+      const input = document.getElementById("searchInput");
+      const kw = input.value.trim();
+      const container = document.getElementById("searchSuggestions");
+      if (!kw) { container.style.display = "none"; return; }
+      const matches = filterItemsByKeyword(kw);
+      const history = getSearchHistory();
+      let html = "";
+      // 搜索历史：仅当输入长度 < 2 时显示（可忽略）
+      if (kw.length >= 2) {
+        const count = matches ? matches.length : 0;
+        html += `<div style="padding:8px 12px;color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);">找到 ${count} 个匹配结果</div>`;
+      }
+      container.innerHTML = html;
+      container.style.display = "block";
+    }
+
+    function renderBuyerResults() {
+      let list = buyerDemandList || data.items.filter((item) => item.status === "approved" && item.aidStatus !== "locked" && item.aidStatus !== "donated");
+      // 搜索过滤
+      const keyword = document.getElementById("searchInput").value.trim();
+      if (keyword && keyword.length >= 2) {
+        const filtered = filterItemsByKeyword(keyword);
+        if (filtered) list = filtered;
+        saveSearchHistory(keyword);
+      }
+      // 收藏过滤
+      const favFilter = document.getElementById("favFilter").checked;
+      if (favFilter) {
+        list = list.filter((item) => isFavorite(item.id));
+      }
+      const totalPages = Math.max(1, Math.ceil(list.length / BUYER_PAGE_SIZE));
+      if (buyerPage >= totalPages) buyerPage = totalPages - 1;
+      if (buyerPage < 0) buyerPage = 0;
+      const start = buyerPage * BUYER_PAGE_SIZE;
+      const pageItems = list.slice(start, start + BUYER_PAGE_SIZE);
+
+      const el = document.getElementById("buyerResults");
+      const cards = pageItems.length
+        ? pageItems.map((item) => renderItemCard(item, { allowReport: true })).join("")
+        : `<div class="empty">${keyword ? "没有匹配的搜索结果" : "暂无可推荐物品"}</div>`;
+      const pager = list.length
+        ? `<div class="pager">
+             <button class="ghost-btn" data-prev="1" ${buyerPage === 0 ? "disabled" : ""}>上一页</button>
+             <span class="pager-info">第 ${buyerPage + 1} / ${totalPages} 页（共 ${list.length} 件）</span>
+             <button class="ghost-btn" data-next="1" ${buyerPage >= totalPages - 1 ? "disabled" : ""}>下一页</button>
+           </div>`
+        : "";
+      el.innerHTML = cards + pager;
+    }
+
+    function renderStats() {
+      document.getElementById("statItems").textContent = data.items.filter((item) => item.status === "approved").length;
+      document.getElementById("statDemands").textContent = data.demands.length;
+      document.getElementById("statReview").textContent = data.items.filter((item) => item.status === "pending").length;
+    }
+
+    function renderSellerUnmatchedDemands() {
+      const el = document.getElementById("sellerUnmatchedDemands");
+      if (!el) return;
+      const demands = getUnmatchedDemands();
+      el.innerHTML = demands.length
+        ? demands.map((demand) => `
+            <article class="demand-card">
+              <div>
+                <div class="item-title">${escapeHTML(getCategoryLabel(demand))} · ${escapeHTML(demand.subject || "不限科目")}</div>
+                <div class="meta">预算￥${escapeHTML(demand.priceMax ?? 30)}以内 · ${escapeHTML(demand.major || "不限专业")}</div>
+              </div>
+              <p class="description">${escapeHTML(demand.text)}</p>
+              <div class="tags">
+                ${demand.wantsNotes ? `<span class="tag">需要笔记</span>` : ""}
+                <span class="tag warn">暂无精准匹配</span>
+              </div>
+              <button class="ghost-btn" data-fill-demand="${escapeHTML(demand.id)}">按这个需求发布</button>
+            </article>
+          `).join("")
+        : `<div class="empty" style="grid-column:1 / -1;">当前历史需求都有较合适的在架匹配，卖家可继续发布毕业闲置补充库存。</div>`;
+    }
+
+    function buildAidContribution(need, item) {
+      const category = getCategoryLabel(need) || "物资";
+      if (need.status === "done" && item) {
+        return `已完成贡献：帮助 ${need.studentCode} 在${need.urgency}前获得${category}「${item.title}」，减少一笔开学刚需支出，并让这件闲置物品完成一次公益循环。`;
+      }
+      if (need.status === "locked" && item) {
+        return `正在产生贡献：已为 ${need.studentCode} 锁定${category}「${item.title}」，老师或志愿者确认交接后即可完成援助。`;
+      }
+      return need.contributionHint || `潜在贡献：这条申请会让平台知道仍缺${category}类物资，提醒卖家优先上架低价或公益物品。`;
+    }
+
+    function renderAidPool() {
+      const aidNeeds = data.aidNeeds || [];
+      const available = data.items.filter(isAidCandidate).filter((item) =>
+        item.price <= 20 || (item.tags || []).some((tag) => /公益|援助|免费/.test(tag))
+      );
+      document.getElementById("aidPending").textContent = aidNeeds.filter((need) => need.status !== "done").length;
+      document.getElementById("aidDone").textContent = data.aidDoneCount != null ? data.aidDoneCount : aidNeeds.filter((need) => need.status === "done").length;
+      document.getElementById("aidAvailable").textContent = available.length;
+      document.getElementById("aidLocked").textContent = data.items.filter((item) => item.aidStatus === "locked").length;
+
+      const sortedNeeds = [...aidNeeds].sort((a, b) => {
+        const order = { matching: 0, locked: 1, done: 2, cancelled: 3 };
+        return (order[a.status] ?? 9) - (order[b.status] ?? 9);
+      });
+      const list = document.getElementById("aidList");
+      list.innerHTML = sortedNeeds.length
+        ? sortedNeeds.map(renderAidCard).join("")
+        : `<div class="empty">暂无援助申请</div>`;
+    }
+
+    function renderAidCard(need) {
+      const statusText = need.status === "done" ? "已完成" : need.status === "locked" ? "已锁定" : need.status === "cancelled" ? "已取消" : "待匹配";
+      const statusClass = need.status === "done" ? "ok" : need.status === "locked" ? "red" : "warn";
+      const lockedItem = need.lockedItemId ? data.items.find((item) => item.id === need.lockedItemId) : null;
+      const matches = lockedItem ? [{ ...lockedItem, matchScore: 100, matchReasons: ["已锁定给该申请"] }] : matchAidItems(need);
+      const matchHtml = matches.length
+        ? matches.map((item) => {
+            const locked = need.lockedItemId === item.id;
+            const actionHtml = need.status === "done"
+              ? ""
+              : locked
+                ? `<button class="ok-btn" data-aid-complete="${escapeHTML(need.id)}">完成援助</button><button class="ghost-btn" data-aid-release="${escapeHTML(need.id)}">取消锁定</button>`
+                : `<button class="primary-btn" data-aid-lock="${escapeHTML(need.id)}" data-aid-item="${escapeHTML(item.id)}">锁定此物品</button>`;
+            return `
+              <div class="aid-match ${locked ? "locked" : ""}">
+                <div class="item-top" style="margin-bottom:4px;">
+                  <strong>${escapeHTML(item.title)}</strong>
+                  <span class="price">￥${escapeHTML(item.price)}</span>
+                </div>
+                <p class="description">${escapeHTML(item.description)}</p>
+                <div class="tags">
+                  <span class="tag ok">匹配度 ${escapeHTML(item.matchScore)}%</span>
+                  ${(item.matchReasons || []).map((reason) => `<span class="tag">${escapeHTML(reason)}</span>`).join("")}
+                </div>
+                <div class="aid-actions">${actionHtml}</div>
+              </div>
+            `;
+          }).join("")
+        : `<div class="aid-match"><strong>暂无直接匹配</strong><p class="description">可继续征集${escapeHTML(getCategoryLabel(need))}类低价或公益物品。</p></div>`;
+      return `
+        <article class="item-card aid-card ${need.status === "done" ? "done" : ""}">
+          <div class="item-top">
+            <div>
+              <div class="item-title">${escapeHTML(need.studentCode)} · ${escapeHTML(getCategoryLabel(need))}</div>
+              <div class="meta">${escapeHTML(need.verifier)} · ${escapeHTML(need.urgency)} · 预算￥${escapeHTML(need.budgetMax ?? 20)} · ${escapeHTML(need.createdAt || "")}</div>
+            </div>
+            <span class="tag ${statusClass}">${statusText}</span>
+          </div>
+          <p class="description">${escapeHTML(need.text)}</p>
+          <div class="impact-note">${escapeHTML(buildAidContribution(need, lockedItem))}</div>
+          ${matchHtml}
+        </article>
+      `;
+    }
+
+    function renderAll() {
+      data = loadData();
+      // 若买家有过一次需求，刷新时用最近需求重跑匹配（让新审核通过的物品进入推荐）
+      buyerDemandList = lastDemand ? matchItems(lastDemand) : null;
+      renderStats();
+      renderBuyerResults();
+      renderSellerUnmatchedDemands();
+      renderAidPool();
+    }
+
+    async function syncFromRemote() {
+      if (remoteSaving) return;
+      try {
+        const remoteData = await fetchRemoteData();
+        if (!remoteData) {
+          if (!remoteSyncReady) await pushRemoteData(loadData());
+          remoteSyncReady = true;
+          return;
+        }
+        const nextSnapshot = JSON.stringify(stripStoredImages(remoteData));
+        if (nextSnapshot !== remoteSnapshot) {
+          remoteSnapshot = nextSnapshot;
+          localStorage.setItem(STORAGE_KEY, nextSnapshot);
+          renderAll();
+        }
+        remoteSyncReady = true;
+      } catch (error) {
+        console.warn("远程数据读取失败，继续使用本地数据：", error.message);
+      }
+    }
+
+    function initRemoteSync() {
+      syncFromRemote();
+      if (location.protocol !== "file:") {
+        setInterval(syncFromRemote, REMOTE_SYNC_MS);
+      }
+    }
+
+    function updateSellerResult(result) {
+      clearRetake(); // 正常识别结果：清除可能存在的重拍横幅、恢复提交按钮
+      document.getElementById("resultCategory").textContent = getCategoryLabel(result);
+      document.getElementById("resultConfidence").textContent = `${Math.round(result.confidence * 100)}%`;
+      document.getElementById("resultScore").textContent = `${result.conditionScore}分`;
+      document.getElementById("resultDescription").value = result.description;
+      renderTags();
+      // 更新旧程度评估
+      const level = result.conditionLevel || (result.conditionScore >= 90 ? "九成新" : result.conditionScore >= 80 ? "八成新" : result.conditionScore >= 70 ? "七成新" : "五成新以下");
+      document.getElementById("conditionLevel").value = level;
+      document.getElementById("conditionDetail").value = result.conditionDetail || `物品整体${level}，${result.defects && result.defects.length ? "存在" + result.defects.join("、") : "无明显瑕疵"}，功能正常，适合日常使用。`;
+    }
+
+    // ===== 自定义标签编辑器 =====
+    // 渲染 currentDraft.tags 为可删除的标签 chip，并显示添加输入框
+    function renderTags() {
+      const tags = (data.currentDraft && data.currentDraft.tags) || [];
+      const html = tags
+        .map((tag) => `<span class="tag red">${tag}<i class="rm" data-rmtag="${tag}">×</i></span>`)
+        .join("");
+      document.getElementById("resultTags").innerHTML = html || "";
+      // 仅在有草稿时显示标签编辑器
+      document.getElementById("tagEditor").style.display = data.currentDraft ? "flex" : "none";
+    }
+
+    function addTag() {
+      if (!data.currentDraft) return;
+      const input = document.getElementById("tagInput");
+      const tag = input.value.trim();
+      if (!tag) return;
+      if (!data.currentDraft.tags) data.currentDraft.tags = [];
+      if (!data.currentDraft.tags.includes(tag)) data.currentDraft.tags.push(tag);
+      input.value = "";
+      renderTags();
+    }
+
+    document.querySelectorAll(".quick-actions button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.getElementById("demandText").value = btn.dataset.template;
+      });
+    });
+
+    // 搜索功能：实时过滤 + 建议
+    let searchDebounce = null;
+    document.getElementById("searchInput").addEventListener("input", () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        buyerPage = 0;
+        renderBuyerResults();
+        showSearchSuggestions();
+      }, 300);
+    });
+    document.getElementById("searchInput").addEventListener("focus", () => {
+      showSearchSuggestions();
+    });
+    document.getElementById("searchInput").addEventListener("blur", () => {
+      setTimeout(() => { document.getElementById("searchSuggestions").style.display = "none"; }, 200);
+    });
+    document.getElementById("favFilter").addEventListener("change", () => {
+      buyerPage = 0;
+      renderBuyerResults();
+    });
+    // 切换 tab 时重置 buyerPage
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        buyerPage = 0;
+        setTab(btn.dataset.tab);
+      });
+    });
+
+    document.getElementById("submitDemand").addEventListener("click", async () => {
+      const text = document.getElementById("demandText").value.trim();
+      if (!text) {
+        document.getElementById("demandError").style.display = "block";
+        document.getElementById("demandText").focus();
+        return;
+      }
+      document.getElementById("demandError").style.display = "none";
+      document.getElementById("buyerParseMode").textContent = "解析中";
+      document.getElementById("buyerParseStatus").textContent = "正在使用阿里云百炼 Qwen 解析买家需求...";
+      const parsed = window.parseDemand ? await window.parseDemand(text) : parseDemandFallback(text);
+      const demand = {
+        id: `demand-${Date.now()}`,
+        ...parsed,
+        text,
+        major: document.getElementById("buyerMajor").value.trim() || parsed.major || "不限",
+        priceMax: Number(document.getElementById("buyerPrice").value) || parsed.priceMax || 30
+      };
+      const parseMode = window.NLPModule && window.NLPModule.getLastMode ? window.NLPModule.getLastMode() : "本地规则解析";
+      const parseError = window.NLPModule && window.NLPModule.getLastError ? window.NLPModule.getLastError() : "";
+      document.getElementById("buyerParseMode").textContent = parseMode;
+      document.getElementById("buyerParsedCategory").textContent = categoryMap[demand.category] || demand.category;
+      document.getElementById("buyerParsedBudget").textContent = "￥" + demand.priceMax;
+      document.getElementById("buyerParseStatus").textContent = parseError
+        ? `${parseMode}：${parseError}`
+        : `${parseMode}完成：${categoryMap[demand.category] || demand.category} · ${demand.subject} · 预算￥${demand.priceMax}以内。`;
+      data.demands.unshift(demand);
+      saveData(data);
+      // 对话只保留：引导语 + 本次（用户+AI）一条记录，不累加
+      const greeting = `<div class="bubble ai">你想找什么？可以直接说“求一本大一下高数书，最好有笔记，20元以内”。</div>`;
+      const exchange = `<div class="bubble user">${text}</div><div class="bubble ai">已确认：${categoryMap[demand.category] || demand.category} · ${demand.subject} · 预算￥${demand.priceMax}以内。下面是为你匹配到的结果。</div>`;
+      document.getElementById("buyerChat").innerHTML = greeting + exchange;
+      // 设置匹配列表 + 重置到第一页
+      buyerDemandList = matchItems(demand);
+      lastDemand = demand;
+      buyerPage = 0;
+      renderBuyerResults();
+    });
+
+    document.getElementById("submitAidNeed").addEventListener("click", async () => {
+      const text = document.getElementById("aidNeedText").value.trim();
+      const studentCode = document.getElementById("aidCode").value.trim();
+      if (!text || !studentCode) return;
+
+      const btn = document.getElementById("submitAidNeed");
+      btn.disabled = true;
+      btn.textContent = "AI 解析中...";
+      document.getElementById("aidParseMode").textContent = "解析中";
+      document.getElementById("aidParseStatus").textContent = "正在使用阿里云百炼 Qwen 解析援助申请...";
+
+      const parsed = window.parseAidNeed ? await window.parseAidNeed(text) : parseAidNeedFallback(text);
+      const parseMode = window.NLPModule && window.NLPModule.getLastMode ? window.NLPModule.getLastMode() : "本地规则解析";
+      const parseError = window.NLPModule && window.NLPModule.getLastError ? window.NLPModule.getLastError() : "";
+      const textHasBudget = /(\d+)\s*元?/.test(text);
+      const budgetMax = textHasBudget
+        ? (Number(parsed.budgetMax) || 20)
+        : (Number(document.getElementById("aidBudget").value) || Number(parsed.budgetMax) || 20);
+      const aidNeed = {
+        id: `aid-${Date.now()}`,
+        studentCode,
+        category: parsed.category || document.getElementById("aidCategory").value,
+        subject: parsed.subject || "",
+        wantsNotes: Boolean(parsed.wantsNotes),
+        text,
+        urgency: parsed.urgency || document.getElementById("aidUrgency").value,
+        verifier: document.getElementById("aidVerifier").value,
+        budgetMax,
+        contributionHint: parsed.contributionHint || "",
+        status: "matching",
+        lockedItemId: "",
+        createdAt: new Date().toLocaleString("zh-CN"),
+        updatedAt: ""
+      };
+
+      document.getElementById("aidCategory").value = aidNeed.category;
+      document.getElementById("aidUrgency").value = aidNeed.urgency;
+      document.getElementById("aidBudget").value = aidNeed.budgetMax;
+      document.getElementById("aidParseMode").textContent = parseMode;
+      document.getElementById("aidParsedCategory").textContent = categoryMap[aidNeed.category] || aidNeed.category;
+      document.getElementById("aidContributionStatus").textContent = "已生成";
+      document.getElementById("aidParseStatus").textContent = parseError
+        ? `${parseMode}：${parseError}`
+        : `${parseMode}完成：${categoryMap[aidNeed.category] || aidNeed.category} · ${aidNeed.subject || "不限"} · ${aidNeed.urgency} · 预算￥${aidNeed.budgetMax}以内。`;
+
+      data.aidNeeds = data.aidNeeds || [];
+      data.aidNeeds.unshift(aidNeed);
+      document.getElementById("aidNeedText").value = "";
+      document.getElementById("aidCode").value = "";
+      saveData(data);
+      setTab("aid");
+      alert(buildAidContribution(aidNeed, null));
+      btn.disabled = false;
+      btn.textContent = "提交援助需求并匹配";
+    });
+
+    function lockAidItem(needId, itemId) {
+      const need = (data.aidNeeds || []).find((entry) => entry.id === needId);
+      const item = data.items.find((entry) => entry.id === itemId);
+      if (!need || !item || !isAidCandidate(item)) return;
+      need.status = "locked";
+      need.lockedItemId = itemId;
+      need.updatedAt = new Date().toLocaleString("zh-CN");
+      item.aidStatus = "locked";
+      item.lockedAidId = needId;
+      item.tags = [...new Set([...(item.tags || []), "援助锁定"])];
+      saveData(data);
+      alert(buildAidContribution(need, item));
+    }
+
+    function completeAid(needId) {
+      const need = (data.aidNeeds || []).find((entry) => entry.id === needId);
+      if (!need || !need.lockedItemId) return;
+      const item = data.items.find((entry) => entry.id === need.lockedItemId);
+      need.status = "done";
+      need.updatedAt = new Date().toLocaleString("zh-CN");
+      if (item) {
+        item.aidStatus = "donated";
+        item.status = "removed";
+        item.tags = [...new Set([...(item.tags || []).filter((tag) => tag !== "援助锁定"), "已援助"])];
+      }
+      data.aidDoneCount = (data.aidDoneCount || 0) + 1;
+      saveData(data);
+      alert(buildAidContribution(need, item));
+      // 关闭贡献弹窗后，"已完成"卡片显示 2 秒再自动移除
+      setTimeout(() => {
+        data = loadData();
+        data.aidNeeds = (data.aidNeeds || []).filter((entry) => entry.id !== needId);
+        saveData(data);
+      }, 2000);
+    }
+
+    function releaseAid(needId) {
+      const need = (data.aidNeeds || []).find((entry) => entry.id === needId);
+      if (!need) return;
+      const item = data.items.find((entry) => entry.id === need.lockedItemId);
+      if (item) {
+        item.aidStatus = "";
+        item.lockedAidId = "";
+        item.tags = (item.tags || []).filter((tag) => tag !== "援助锁定");
+      }
+      need.status = "matching";
+      need.lockedItemId = "";
+      need.updatedAt = new Date().toLocaleString("zh-CN");
+      saveData(data);
+    }
+
+    function fillSellerFromDemand(demandId) {
+      const demand = (data.demands || []).find((entry) => entry.id === demandId);
+      if (!demand) return;
+      setTab("seller");
+      document.getElementById("sellerSubject").value = demand.subject || "";
+      document.getElementById("sellerPrice").value = Math.max(0, Number(demand.priceMax || 0) || 0);
+      const manualCategory = document.getElementById("manualCategory");
+      if (manualCategory && demand.category) manualCategory.value = demand.category;
+      const manualSubject = document.getElementById("manualSubject");
+      if (manualSubject) manualSubject.value = demand.subject || "";
+      const manualCategoryText = document.getElementById("manualCategoryText");
+      if (manualCategoryText) manualCategoryText.value = demand.customCategory || "";
+      document.getElementById("analyzeHint").textContent = `已带入历史需求：${categoryMap[demand.category] || demand.category} · ${demand.subject || "不限科目"} · 预算￥${demand.priceMax ?? 30}以内。上传照片后即可生成物品信息。`;
+      document.getElementById("uploadArea").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    // ===== 图片统一入口：压缩到最长边 + 预览（上传与拍照共用） =====
+    function compressAndPreview(dataUrl) {
+      const img = new Image();
+      img.onload = () => {
+        const maxSide = (window.AppConfig && window.AppConfig.ui && window.AppConfig.ui.imageMaxSide) || 800;
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        selectedImageData = canvas.toDataURL("image/jpeg", 0.7);
+        document.getElementById("previewImage").src = selectedImageData;
+        document.getElementById("uploadArea").classList.add("has-image");
+      };
+      img.src = dataUrl;
+    }
+
+    document.getElementById("photoInput").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      clearRetake(); // 新选图：清除上次的重拍横幅
+      const reader = new FileReader();
+      reader.onload = () => compressAndPreview(reader.result);
+      reader.readAsDataURL(file);
+    });
+
+    // ===== 摄像头拍摄 =====
+    let cameraStream = null;
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((t) => t.stop());
+        cameraStream = null;
+      }
+      const v = document.getElementById("cameraVideo");
+      if (v) v.srcObject = null;
+      document.getElementById("cameraModal").classList.remove("show");
+    }
+    async function openCamera() {
+      const modal = document.getElementById("cameraModal");
+      const video = document.getElementById("cameraVideo");
+      const tip = document.getElementById("cameraTip");
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        tip.textContent = "当前浏览器不支持摄像头，请改用上传。";
+        return;
+      }
+      modal.classList.add("show");
+      tip.textContent = "正在启动摄像头…";
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false
+        });
+        video.srcObject = cameraStream;
+        await video.play();
+        tip.textContent = "";
+      } catch (err) {
+        stopCamera();
+        const msg = /Permission|NotAllowed/i.test(err.name)
+          ? "摄像头权限被拒绝或当前非安全上下文（请用 http://localhost 打开，勿用 file://）。"
+          : "无法启动摄像头：" + err.message + "，请改用上传。";
+        tip.textContent = msg;
+      }
+    }
+    function capturePhoto() {
+      const video = document.getElementById("cameraVideo");
+      if (!video || !video.videoWidth) return;
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+      stopCamera();
+      clearRetake();
+      compressAndPreview(dataUrl); // 拍完进入预览，用户再点「生成物品信息」识别
+    }
+
+    document.getElementById("cameraBtn").addEventListener("click", openCamera);
+    document.getElementById("cameraCapture").addEventListener("click", capturePhoto);
+    document.getElementById("cameraCancel").addEventListener("click", stopCamera);
+
+
+    // ===== 视觉模块适配层 =====
+    // VLM 负责识别（类别/名称/描述），MediaPipe(vision-module) 负责手部遮挡检测
+    const defaultSubjectByCategory = (window.AppConfig && window.AppConfig.categories && window.AppConfig.categories.defaultSubject) || { book: "教材", uniform: "校服", bottle: "水杯", lamp: "台灯", backpack: "书包", digital: "数码配件" };
+
+    // 20s 总超时：模型挂起时自动降级，绝不让流程卡死
+    function withTimeout(promise, ms, fallbackMsg) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error(fallbackMsg)), ms))
+      ]);
+    }
+
+    window.detectItem = async function () {
+      // 1. 先做手部遮挡检测（强制开启）；遮挡则不调用 VLM，直接返回“请重拍”
+      const handResult = window.VisionModule
+        ? await withTimeout(window.VisionModule.analyzeImage(selectedImageData, { enableHandCheck: true }), 20000, "手部检测超时")
+            .catch(() => ({ handOcclusion: { detected: false, message: "手部检测不可用，已跳过" } }))
+        : { handOcclusion: { detected: false, message: "" } };
+      const ho = (handResult && handResult.handOcclusion) || { detected: false, message: "" };
+      if (ho.detected) {
+        return { retake: true, handMessage: ho.message || "手部遮挡了物品" };
+      }
+
+      // 2. 无遮挡 → 调用 VLM 识别（精准类别+文案）
+      const vlmResult = window.VLMModule
+        ? await withTimeout(window.VLMModule.analyzeImage(selectedImageData, {}), 20000, "VLM 识别超时").catch(() => null)
+        : null;
+      if (!vlmResult) {
+        throw new Error("VLM 识别失败");
+      }
+      return {
+        category: vlmResult.category,
+        subject: vlmResult.subject || defaultSubjectByCategory[vlmResult.category] || "物品",
+        confidence: 0.95,
+        defects: [],
+        conditionScore: 90,
+        tags: [],
+        description: vlmResult.description || "",
+        occlusionWarning: false,
+        handMessage: ho.message || ""
+      };
+    };
+
+    // 手部遮挡 → 右侧显示“请重新拍摄”，并禁用提交
+    function showRetake(message) {
+      document.getElementById("retakeReason").textContent = message;
+      document.getElementById("retakeBanner").classList.add("show");
+      document.getElementById("resultGrid").style.display = "none";
+      const descWrap = document.getElementById("resultDescription").closest(".field");
+      if (descWrap) descWrap.style.display = "none";
+      document.getElementById("resultTags").style.display = "none";
+      document.getElementById("tagEditor").style.display = "none";
+      document.getElementById("manualCategoryWrap").classList.remove("show");
+      document.getElementById("submitItem").disabled = true; // 禁用提交，防误传遮挡图
+      document.getElementById("saveDraft").disabled = true;
+    }
+    function clearRetake() {
+      document.getElementById("retakeBanner").classList.remove("show");
+      document.getElementById("resultGrid").style.display = "grid";
+      const descWrap = document.getElementById("resultDescription").closest(".field");
+      if (descWrap) descWrap.style.display = "";
+      document.getElementById("resultTags").style.display = "";
+      document.getElementById("submitItem").disabled = false;
+      document.getElementById("saveDraft").disabled = false;
+    }
+
+    document.getElementById("analyzeItem").addEventListener("click", async () => {
+      const hasImage = !!selectedImageData; // 上传或拍照都会产生 selectedImageData
+      const btn = document.getElementById("analyzeItem");
+      const hint = document.getElementById("analyzeHint");
+      let result = null;
+      let note = "";
+
+      btn.disabled = true;
+      try {
+        if (window.detectItem && hasImage) {
+          btn.textContent = "识别中（首次需加载模型）…";
+          try {
+            result = await window.detectItem();
+          } catch (err) {
+            note = "视觉识别失败（" + err.message + "），已改用演示数据。";
+          }
+        } else if (!hasImage) {
+          note = "未选择图片，使用演示数据。";
+        }
+
+        // 手部遮挡 → 不生成文案，右侧提示重拍，直接结束
+        if (result && result.retake) {
+          showRetake(result.handMessage);
+          hint.textContent = "检测到手部遮挡，请重新拍摄后再生成。";
+          return;
+        }
+
+        if (!result) {
+          result = demoDetections[Math.floor(Math.random() * demoDetections.length)];
+          note = note || "视觉模块未加载，使用演示数据。";
+        } else {
+          const src = "识别成功";
+          note = result.handMessage ? (src + "；" + result.handMessage) : src + "。";
+        }
+
+        // 卖家手动填写的名称优先，否则把识别到的名称回填进输入框
+        const subjectEl = document.getElementById("sellerSubject");
+        const userSubject = subjectEl.value.trim();
+        if (userSubject) {
+          result.subject = userSubject;
+        } else {
+          subjectEl.value = result.subject;
+        }
+        if (!result.tags || !result.tags.length) result.tags = ["实拍上传"];
+
+        // 文案：VLM 已给出则直接用，否则走 Qwen / 离线模板
+        const price = Number(document.getElementById("sellerPrice").value) || 0;
+        let description = result.description && result.description.trim();
+        if (!description) {
+          btn.textContent = "NLP 文案生成中…";
+          description = window.generateDescription
+            ? await window.generateDescription({ ...result, price })
+            : `${getCategoryLabel(result)}状态整体不错，成色约${result.conditionScore}分，适合校内同学低价循环使用。`;
+        }
+
+        data.currentDraft = {
+          ...result,
+          id: `item-${Date.now()}`,
+          title: `${getCategoryLabel(result)}-${result.subject}`,
+          major: "不限",
+          price,
+          campus: document.getElementById("sellerCampus").value.trim(),
+          phone: document.getElementById("sellerPhone").value.trim(),
+          email: document.getElementById("sellerEmail").value.trim(),
+          description,
+          conditionLevel: document.getElementById("conditionLevel").value,
+          conditionDetail: document.getElementById("conditionDetail").value,
+          status: "draft",
+          reports: 0,
+          image: selectedImageData
+        };
+        // 草稿不写入 localStorage（图片可能过大触发 QuotaExceededError 静默失败）
+        try {
+          const draftOnly = { ...data, currentDraft: { ...data.currentDraft, image: "" } };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(draftOnly));
+        } catch (e) {
+          console.warn("localStorage 写入失败，草稿仅保留在内存：", e.message);
+        }
+        updateSellerResult(data.currentDraft);
+        // 识别完成后，显示手动修正下拉框并自动同步到本次识别的类别
+        document.getElementById("manualCategoryWrap").classList.add("show");
+        document.getElementById("manualCategory").value = result.category;
+        document.getElementById("manualSubject").value = result.subject || "";
+        document.getElementById("manualCategoryText").value = result.customCategory || "";
+        hint.textContent = note;
+      } catch (err) {
+        hint.textContent = "生成失败：" + err.message + "（请查看控制台）";
+        console.error("[analyzeItem]", err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "生成物品信息";
+      }
+    });
+
+    // ===== 手动修正类别后重新生成文案（兜底） =====
+    document.getElementById("regenerateBtn").addEventListener("click", async () => {
+      if (!data.currentDraft) return;
+      const manualCat = document.getElementById("manualCategory").value;
+      const manualSubject = document.getElementById("manualSubject").value.trim();
+      const manualCategoryText = document.getElementById("manualCategoryText").value.trim();
+      if (!manualCat) return;
+      const btn = document.getElementById("regenerateBtn");
+      const hint = document.getElementById("analyzeHint");
+      btn.disabled = true;
+      btn.textContent = "重新生成中…";
+      try {
+        // 用手动选择的类别覆盖检测结果
+        data.currentDraft.category = manualCategoryText ? "custom" : manualCat;
+        data.currentDraft.customCategory = manualCategoryText;
+        if (manualSubject) {
+          data.currentDraft.subject = manualSubject;
+          document.getElementById("sellerSubject").value = manualSubject;
+        }
+        data.currentDraft.title = `${getCategoryLabel(data.currentDraft)}-${data.currentDraft.subject}`;
+        const description = window.generateDescription
+          ? await window.generateDescription({ ...data.currentDraft })
+          : data.currentDraft.description;
+        data.currentDraft.description = description;
+        // 同步更新新旧程度评估
+        data.currentDraft.conditionLevel = document.getElementById("conditionLevel").value;
+        data.currentDraft.conditionDetail = document.getElementById("conditionDetail").value;
+        updateSellerResult(data.currentDraft);
+        document.getElementById("manualCategory").value = manualCategoryText ? "custom" : data.currentDraft.category; // 下拉框与修正后的类别同步
+        document.getElementById("manualSubject").value = data.currentDraft.subject || "";
+        document.getElementById("manualCategoryText").value = data.currentDraft.customCategory || "";
+        hint.textContent = "已按修正后的类别和名称（" + getCategoryLabel(data.currentDraft) + " · " + (data.currentDraft.subject || "未命名") + "）重新生成文案。";
+      } catch (err) {
+        hint.textContent = "重新生成失败：" + err.message;
+        console.error("[regenerate]", err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "用修正后的类别重新生成文案";
+      }
+    });
+
+    document.getElementById("saveDraft").addEventListener("click", () => {
+      if (!data.currentDraft) return;
+      // 保存时捕获用户手动修改的最新值
+      data.currentDraft.description = document.getElementById("resultDescription").value.trim();
+      data.currentDraft.conditionLevel = document.getElementById("conditionLevel").value;
+      data.currentDraft.conditionDetail = document.getElementById("conditionDetail").value.trim();
+      alert("草稿已保存，演示时可继续修改后提交审核。");
+    });
+
+    document.getElementById("submitItem").addEventListener("click", async () => {
+      if (!data.currentDraft) return;
+      const submitBtn = document.getElementById("submitItem");
+      // 提交时捕获用户手动修改的最新值
+      data.currentDraft.description = document.getElementById("resultDescription").value.trim();
+      data.currentDraft.conditionLevel = document.getElementById("conditionLevel").value;
+      data.currentDraft.conditionDetail = document.getElementById("conditionDetail").value.trim();
+      data.currentDraft.phone = document.getElementById("sellerPhone").value.trim();
+      data.currentDraft.email = document.getElementById("sellerEmail").value.trim();
+      // 验证至少填写一种联系方式
+      if (!data.currentDraft.phone && !data.currentDraft.email) {
+        document.getElementById("sellerPhone").focus();
+        alert("请至少填写手机号或邮箱，以便买家联系您。");
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = "提交中...";
+      const pendingItem = await uploadRemoteImage({
+        ...data.currentDraft,
+        status: "pending",
+        tags: [...data.currentDraft.tags, "待审核"]
+      });
+      data.items.unshift(pendingItem);
+      data.currentDraft = null;
+      renderTags(); // 提交后隐藏标签编辑器
+      document.getElementById("manualCategoryWrap").classList.remove("show"); // 提交后隐藏修正卡
+      saveData(data);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "提交审核";
+      alert("已提交审核。审核通过后，买家页面才会展示该物品。");
+    });
+
+    // ===== 自定义标签：添加按钮 + 回车 + 删除 =====
+    document.getElementById("addTagBtn").addEventListener("click", addTag);
+    document.getElementById("tagInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") { event.preventDefault(); addTag(); }
+    });
+
+    // ===== 物品详情弹窗（买家页点击缩略图） =====
+    function conditionLevelFromScore(score) {
+      const s = Number(score) || 0;
+      return s >= 90 ? "九成新" : s >= 80 ? "八成新" : s >= 70 ? "七成新" : "五成新以下";
+    }
+
+    function openItemDetail(itemId) {
+      const item = data.items.find((entry) => entry.id === itemId);
+      const modal = document.getElementById("itemDetailModal");
+      if (!item || !modal) return;
+
+      const img = document.getElementById("detailImage");
+      if (item.image) {
+        img.src = item.image;
+        img.style.display = "block";
+        img.setAttribute("data-zoom", item.image);
+      } else {
+        img.removeAttribute("src");
+        img.removeAttribute("data-zoom");
+        img.style.display = "none";
+      }
+
+      document.getElementById("detailTitle").textContent = item.title || "物品";
+      document.getElementById("detailMeta").textContent =
+        [getCategoryLabel(item), item.major, item.subject].filter(Boolean).join(" · ");
+      document.getElementById("detailPrice").textContent = item.price != null ? `￥${item.price}` : "";
+
+      const score = Number(item.conditionScore) || 0;
+      const level = item.conditionLevel || conditionLevelFromScore(item.conditionScore);
+      const condParts = [`成色 ${level}`];
+      if (item.conditionScore != null) condParts.push(`（${score}分）`);
+      if (item.conditionDetail) condParts.push(`· ${item.conditionDetail}`);
+      document.getElementById("detailCondition").textContent = condParts.join(" ");
+
+      document.getElementById("detailDescription").textContent = item.description || "暂无描述";
+
+      const tagsEl = document.getElementById("detailTags");
+      const tags = Array.isArray(item.tags) ? item.tags : [];
+      tagsEl.innerHTML = tags.map((t) => `<span class="tag">${t}</span>`).join("");
+
+      const contact = [];
+      if (item.phone) contact.push(`📞 ${item.phone}`);
+      if (item.email) contact.push(`📧 ${item.email}`);
+      document.getElementById("detailContact").textContent = contact.join("    ");
+
+      modal.classList.add("show");
+    }
+
+    // 关闭详情弹窗：点遮罩 / × 按钮
+    document.getElementById("itemDetailModal").addEventListener("click", (event) => {
+      if (event.target === event.currentTarget || event.target.id === "itemDetailClose") {
+        event.currentTarget.classList.remove("show");
+      }
+    });
+    // ESC 关闭详情弹窗
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        document.getElementById("itemDetailModal").classList.remove("show");
+      }
+    });
+
+    document.body.addEventListener("click", (event) => {
+      // 物品详情弹窗（买家页点击缩略图）
+      const detailEl = event.target.closest("[data-detail]");
+      if (detailEl) {
+        openItemDetail(detailEl.getAttribute("data-detail"));
+        return;
+      }
+      // 图片放大
+      const zoomEl = event.target.closest("[data-zoom]");
+      if (zoomEl) {
+        document.getElementById("lightboxImg").src = zoomEl.getAttribute("data-zoom");
+        document.getElementById("imgLightbox").classList.add("show");
+        return;
+      }
+      const rmTag = event.target.dataset.rmtag;
+      if (rmTag && data.currentDraft && data.currentDraft.tags) {
+        data.currentDraft.tags = data.currentDraft.tags.filter((t) => t !== rmTag);
+        renderTags();
+        return;
+      }
+      const favId = event.target.dataset.fav;
+      if (favId) {
+        toggleFavorite(favId);
+        return;
+      }
+
+      const fillDemand = event.target.dataset.fillDemand;
+      if (fillDemand) {
+        fillSellerFromDemand(fillDemand);
+        return;
+      }
+
+      const reportId = event.target.dataset.report;
+      if (reportId) {
+        const item = data.items.find((entry) => entry.id === reportId);
+        item.reports += 1;
+        saveData(data);
+      }
+
+      const aidLock = event.target.dataset.aidLock;
+      const aidItem = event.target.dataset.aidItem;
+      if (aidLock && aidItem) {
+        lockAidItem(aidLock, aidItem);
+        return;
+      }
+
+      const aidComplete = event.target.dataset.aidComplete;
+      if (aidComplete) {
+        completeAid(aidComplete);
+        return;
+      }
+
+      const aidRelease = event.target.dataset.aidRelease;
+      if (aidRelease) {
+        releaseAid(aidRelease);
+        return;
+      }
+
+      // 买家列表分页：上一页 / 下一页（disabled 按钮不触发点击）
+      if ("prev" in event.target.dataset) {
+        if (buyerPage > 0) { buyerPage--; renderBuyerResults(); }
+      } else if ("next" in event.target.dataset) {
+        buyerPage++;
+        renderBuyerResults();
+      }
+    });
+
+    // 点灯箱关闭
+    document.getElementById("imgLightbox").addEventListener("click", () => {
+      document.getElementById("imgLightbox").classList.remove("show");
+    });
+
+    // 跨页实时同步：审核员在 reviewer.html 的操作会触发 storage 事件，主站自动重渲染
+    window.addEventListener("storage", (event) => {
+      if (event.key === STORAGE_KEY) renderAll();
+    });
+
+    renderAll();
+    initRemoteSync();
+  </script>
+</body>
+</html>

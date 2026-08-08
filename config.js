@@ -112,6 +112,12 @@
       aidFree: 30,
       aidLowPrice: 20,
       aidUrgent: 10
+    },
+
+    // ---------- 交易（模拟钱包） ----------
+    // 余额为模拟值，存于共享数据层（非真实资金）；初始余额用于未在 balances 表中的用户。
+    transaction: {
+      startBalance: 1000
     }
   };
 

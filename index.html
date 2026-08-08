@@ -1091,6 +1091,7 @@
         <button class="tab-btn active" data-tab="buyer">我要买</button>
         <button class="tab-btn" data-tab="seller">我要卖</button>
         <button class="tab-btn" data-tab="aid">援助池</button>
+        <button class="tab-btn" data-tab="trade">我的交易</button>
       </nav>
       <div class="user-area" id="userArea"></div>
     </header>
@@ -1401,9 +1402,29 @@
           </div>
         </div>
       </section>
+
+      <section class="page" id="tradePage">
+        <div id="tradeList"></div>
+      </section>
     </main>
     <!-- 图片放大灯箱 -->
     <div id="imgLightbox"><img id="lightboxImg" alt="实物大图" /></div>
+    <!-- 钱包弹窗（充值/提现共用） -->
+    <div class="wallet-modal" id="walletModal">
+      <div class="wallet-modal-content">
+        <button class="wallet-close" id="walletClose" aria-label="关闭">&times;</button>
+        <h3 id="walletTitle">充值</h3>
+        <div id="walletBalance" class="wallet-balance"></div>
+        <div class="wallet-field">
+          <label id="walletHint">输入金额</label>
+          <input id="walletAmount" type="number" min="1" step="1" placeholder="金额（元）" />
+        </div>
+        <div class="wallet-actions-modal">
+          <button class="trade-btn primary" id="walletConfirm">确认</button>
+          <button class="trade-btn ghost" id="walletCancelBtn">取消</button>
+        </div>
+      </div>
+    </div>
     <!-- 物品详情弹窗（买家页点击缩略图） -->
     <div id="itemDetailModal" class="item-detail-modal">
       <div class="detail-box">
@@ -1437,6 +1458,44 @@
     .user-area .u-badge { font-size:12px; padding:2px 8px; border-radius:10px; background:#fff4e0; color:#b56a00; font-weight:600; }
     .user-area .u-logout { border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:8px; padding:6px 12px; cursor:pointer; font-size:13px; transition:all .18s var(--ease); }
     .user-area .u-logout:hover { border-color:var(--red); color:var(--red); }
+
+    /* ===== 交易：按钮 / 钱包 / 订单卡 ===== */
+    .trade-btn { border:0; border-radius:8px; padding:9px 16px; font-weight:700; cursor:pointer; transition:transform .15s var(--ease),background-color .15s var(--ease); }
+    .trade-btn.primary { background:var(--red); color:#fff; }
+    .trade-btn.primary:hover { background:var(--red-dark); }
+    .trade-btn.ghost { background:#f2f3f5; color:var(--ink); }
+    .trade-btn.ghost:hover { background:#e6e8ec; }
+    .trade-btn:active { transform:scale(.97); }
+    .buy-btn { margin-left:auto; }
+
+    .wallet-card { background:linear-gradient(135deg,#c8192e,#9f1426); color:#fff; border-radius:14px; padding:22px 24px; display:flex; flex-direction:column; gap:6px; box-shadow:var(--shadow); margin-bottom:18px; }
+    .wallet-card .wallet-label { font-size:13px; opacity:.9; }
+    .wallet-card .wallet-amount { font-size:32px; font-weight:800; }
+    .wallet-card .wallet-actions { display:flex; gap:10px; margin-top:10px; }
+    .wallet-card .wallet-actions .trade-btn.primary { background:#fff; color:var(--red); }
+    .wallet-card .wallet-actions .trade-btn.ghost { background:rgba(255,255,255,.2); color:#fff; }
+
+    .trade-section { margin-bottom:22px; }
+    .trade-section h3 { font-size:16px; margin:0 0 12px; }
+    .trade-empty { color:var(--muted); text-align:center; padding:24px; border:1px dashed var(--line); border-radius:8px; background:#fafafa; }
+    .order-card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; box-shadow:var(--shadow); display:grid; gap:6px; }
+    .order-card .order-title { font-size:15px; font-weight:700; }
+    .order-card .order-meta { color:var(--muted); font-size:13px; }
+    .order-card .order-status { font-size:13px; color:var(--red); font-weight:600; }
+    .order-card .order-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+
+    /* 钱包弹窗 */
+    .wallet-modal { display:none; position:fixed; inset:0; background:rgba(32,36,42,.45); z-index:60; align-items:center; justify-content:center; }
+    .wallet-modal.active { display:flex; }
+    .wallet-modal-content { background:#fff; border-radius:14px; padding:24px; width:min(380px, calc(100% - 32px)); box-shadow:var(--shadow); position:relative; }
+    .wallet-modal-content h3 { margin:0 0 8px; font-size:18px; }
+    .wallet-balance { color:var(--muted); font-size:13px; margin-bottom:14px; }
+    .wallet-field { margin-bottom:16px; }
+    .wallet-field label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+    .wallet-field input { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:9px; font-size:15px; }
+    .wallet-actions-modal { display:flex; gap:10px; }
+    .wallet-actions-modal .trade-btn { flex:1; }
+    .wallet-close { position:absolute; top:10px; right:14px; border:0; background:transparent; font-size:22px; color:var(--muted); cursor:pointer; }
   </style>
   <!-- 全局配置（必须在所有模块之前加载） -->
   <script src="./config.js"></script>
@@ -1537,6 +1596,8 @@
         items: Array.isArray(parsed.items) ? parsed.items : seedData.items,
         demands: Array.isArray(parsed.demands) ? parsed.demands : seedData.demands,
         aidNeeds: Array.isArray(parsed.aidNeeds) ? parsed.aidNeeds : seedData.aidNeeds,
+        orders: Array.isArray(parsed.orders) ? parsed.orders : [],
+        balances: (parsed.balances && typeof parsed.balances === "object") ? parsed.balances : {},
         currentDraft: parsed.currentDraft || null
       };
     }
@@ -1565,6 +1626,8 @@
         items: Array.isArray(value.items) ? value.items : seedData.items,
         demands: Array.isArray(value.demands) ? value.demands : seedData.demands,
         aidNeeds: Array.isArray(value.aidNeeds) ? value.aidNeeds : seedData.aidNeeds,
+        orders: Array.isArray(value.orders) ? value.orders : [],
+        balances: (value.balances && typeof value.balances === "object") ? value.balances : {},
         currentDraft: value.currentDraft || null
       };
     }
@@ -1674,6 +1737,8 @@
       document.getElementById("buyerPage").classList.toggle("active", tabName === "buyer");
       document.getElementById("sellerPage").classList.toggle("active", tabName === "seller");
       document.getElementById("aidPage").classList.toggle("active", tabName === "aid");
+      document.getElementById("tradePage").classList.toggle("active", tabName === "trade");
+      if (tabName === "trade") renderTradePage();
     }
 
     function parseDemandFallback(text) {
@@ -1704,7 +1769,7 @@
 
     function matchItems(demand) {
       return data.items
-        .filter((item) => item.status === "approved" && item.aidStatus !== "locked" && item.aidStatus !== "donated")
+        .filter((item) => item.status === "approved" && item.aidStatus !== "locked" && item.aidStatus !== "donated" && item.txStatus !== "reserved" && item.txStatus !== "sold")
         .map((item) => {
           const W = (window.AppConfig && window.AppConfig.scoring) || {};
           let score = 0;
@@ -1784,12 +1849,214 @@
         .slice(0, 3);
     }
 
+    // ===== 交易（模拟钱包 + 托管） =====
+    // 余额存于共享数据层 data.balances（按 studentId），模拟值、非真实资金。
+    function getStartBalance() {
+      const t = (window.AppConfig && window.AppConfig.transaction) || {};
+      return Number(t.startBalance) || 0;
+    }
+    function getBalance(studentId) {
+      if (!studentId) return getStartBalance();
+      const b = data.balances || {};
+      return b[studentId] != null ? Number(b[studentId]) : getStartBalance();
+    }
+    function adjustBalance(studentId, delta) {
+      if (!studentId) return;
+      if (!data.balances || typeof data.balances !== "object") data.balances = {};
+      data.balances[studentId] = getBalance(studentId) + delta;
+    }
+
+    function buyItem(itemId) {
+      const user = window.AuthModule.getCurrentUser();
+      if (!user) { window.AuthModule.gotoLogin(); return; }
+      const item = data.items.find((i) => i.id === itemId);
+      if (!item) return;
+      if (item.status !== "approved") { alert("该物品未上架"); return; }
+      if (item.txStatus === "reserved") { alert("该物品已被预订"); return; }
+      if (item.txStatus === "sold") { alert("该物品已售出"); return; }
+      if (item.ownerId && item.ownerId === user.studentId) { alert("不能购买自己的物品"); return; }
+      const balance = getBalance(user.studentId);
+      if (balance < item.price) { alert("余额不足（当前 ￥" + balance + "），请先充值"); return; }
+      adjustBalance(user.studentId, -item.price); // 扣款托管
+      const order = {
+        id: "order-" + Date.now(),
+        itemId: item.id,
+        itemTitle: item.title,
+        price: item.price,
+        buyerId: user.studentId,
+        buyerName: user.nickname || user.studentId,
+        sellerId: item.ownerId || "",
+        sellerName: item.ownerName || "卖家",
+        status: "paid",
+        createdAt: new Date().toLocaleString("zh-CN"),
+        updatedAt: ""
+      };
+      data.orders = data.orders || [];
+      data.orders.unshift(order);
+      item.txStatus = "reserved";
+      item.lockedOrderId = order.id;
+      saveData(data);
+      renderTradePage();
+      renderBuyerResults();
+      alert("已下单并扣款 ￥" + item.price + "，等待卖家确认。可在「我的交易」查看。");
+    }
+
+    function acceptOrder(orderId) {
+      const order = (data.orders || []).find((o) => o.id === orderId);
+      if (!order || order.status !== "paid") return;
+      order.status = "accepted";
+      order.updatedAt = new Date().toLocaleString("zh-CN");
+      saveData(data);
+      renderTradePage();
+    }
+
+    function declineOrder(orderId) {
+      const order = (data.orders || []).find((o) => o.id === orderId);
+      if (!order || order.status !== "paid") return;
+      adjustBalance(order.buyerId, order.price); // 退款买家
+      order.status = "declined";
+      order.updatedAt = new Date().toLocaleString("zh-CN");
+      const item = data.items.find((i) => i.id === order.itemId);
+      if (item && item.lockedOrderId === order.id) { item.txStatus = ""; item.lockedOrderId = ""; }
+      saveData(data);
+      renderTradePage();
+      renderBuyerResults();
+    }
+
+    function completeOrder(orderId) {
+      const order = (data.orders || []).find((o) => o.id === orderId);
+      if (!order || order.status !== "accepted") return;
+      if (order.sellerId) adjustBalance(order.sellerId, order.price); // 卖家到账
+      order.status = "completed";
+      order.updatedAt = new Date().toLocaleString("zh-CN");
+      const item = data.items.find((i) => i.id === order.itemId);
+      if (item) { item.txStatus = "sold"; item.status = "removed"; item.lockedOrderId = order.id; }
+      saveData(data);
+      renderTradePage();
+      renderBuyerResults();
+    }
+
+    function cancelOrder(orderId) {
+      const order = (data.orders || []).find((o) => o.id === orderId);
+      if (!order || (order.status !== "paid" && order.status !== "accepted")) return;
+      adjustBalance(order.buyerId, order.price); // 退款买家
+      order.status = "cancelled";
+      order.updatedAt = new Date().toLocaleString("zh-CN");
+      const item = data.items.find((i) => i.id === order.itemId);
+      if (item && item.lockedOrderId === order.id) { item.txStatus = ""; item.lockedOrderId = ""; }
+      saveData(data);
+      renderTradePage();
+      renderBuyerResults();
+    }
+
+    function recharge(amount) {
+      const user = window.AuthModule.getCurrentUser();
+      if (!user) return;
+      const n = Number(amount);
+      if (!n || n <= 0) { alert("请输入正数金额"); return; }
+      adjustBalance(user.studentId, n);
+      saveData(data);
+      renderTradePage();
+    }
+    function withdraw(amount) {
+      const user = window.AuthModule.getCurrentUser();
+      if (!user) return;
+      const n = Number(amount);
+      if (!n || n <= 0) { alert("请输入正数金额"); return; }
+      const bal = getBalance(user.studentId);
+      if (n > bal) { alert("余额不足，当前余额 ￥" + bal); return; }
+      adjustBalance(user.studentId, -n);
+      saveData(data);
+      renderTradePage();
+    }
+
+    // 钱包弹窗（充值/提现共用）
+    function openWallet(mode) {
+      const user = window.AuthModule.getCurrentUser();
+      const m = document.getElementById("walletModal");
+      document.getElementById("walletTitle").textContent = mode === "withdraw" ? "提现" : "充值";
+      document.getElementById("walletHint").textContent = mode === "withdraw"
+        ? "输入提现金额（模拟，将从余额中扣除）"
+        : "输入充值金额（模拟，将增加到余额）";
+      document.getElementById("walletBalance").textContent = "当前余额 ￥" + getBalance(user && user.studentId);
+      document.getElementById("walletAmount").value = "";
+      m.dataset.mode = mode;
+      m.classList.add("active");
+    }
+    function confirmWallet() {
+      const m = document.getElementById("walletModal");
+      const mode = m.dataset.mode;
+      const amount = document.getElementById("walletAmount").value;
+      m.classList.remove("active");
+      if (mode === "withdraw") withdraw(amount);
+      else recharge(amount);
+    }
+
+    function orderStatusText(s) {
+      return { paid: "待卖家确认", accepted: "已接受·待完成", completed: "已完成", cancelled: "已取消", declined: "卖家已拒绝" }[s] || s;
+    }
+
+    function renderOrderCard(o, side) {
+      let actions = "";
+      if (side === "buy") {
+        if (o.status === "paid" || o.status === "accepted") actions = `<button class="trade-btn ghost" data-cancel="${o.id}">取消订单</button>`;
+        if (o.status === "accepted") actions += `<button class="trade-btn primary" data-complete="${o.id}">确认收货</button>`;
+      } else {
+        if (o.status === "paid") actions = `<button class="trade-btn primary" data-accept="${o.id}">接受</button><button class="trade-btn ghost" data-decline="${o.id}">拒绝</button>`;
+        if (o.status === "accepted") actions = `<button class="trade-btn primary" data-complete="${o.id}">完成交易</button>`;
+      }
+      const other = side === "buy" ? ("卖家：" + (o.sellerName || o.sellerId || "-")) : ("买家：" + (o.buyerName || o.buyerId || "-"));
+      return `
+        <article class="order-card">
+          <div class="order-title">${o.itemTitle || "物品"}</div>
+          <div class="order-meta">￥${o.price} · ${other} · ${o.createdAt || ""}</div>
+          <div class="order-status">${orderStatusText(o.status)}</div>
+          <div class="order-actions">${actions}</div>
+        </article>`;
+    }
+
+    function renderTradePage() {
+      const el = document.getElementById("tradeList");
+      if (!el) return;
+      const user = window.AuthModule.getCurrentUser();
+      if (!user) { el.innerHTML = ""; return; }
+      const balance = getBalance(user.studentId);
+      const orders = data.orders || [];
+      const myBuys = orders.filter((o) => o.buyerId === user.studentId);
+      const mySells = orders.filter((o) => o.sellerId === user.studentId);
+      const head = `
+        <div class="wallet-card">
+          <div class="wallet-label">我的余额</div>
+          <div class="wallet-amount">￥${balance}</div>
+          <div class="wallet-actions">
+            <button class="trade-btn primary" data-recharge="1">充值</button>
+            <button class="trade-btn ghost" data-withdraw="1">提现</button>
+          </div>
+        </div>`;
+      const buyHtml = myBuys.length ? myBuys.map((o) => renderOrderCard(o, "buy")).join("") : `<div class="trade-empty">暂无购买记录</div>`;
+      const sellHtml = mySells.length ? mySells.map((o) => renderOrderCard(o, "sell")).join("") : `<div class="trade-empty">暂无卖出记录</div>`;
+      el.innerHTML =
+        head +
+        `<div class="trade-section"><h3>我买的</h3><div class="card-list">${buyHtml}</div></div>` +
+        `<div class="trade-section"><h3>我卖的</h3><div class="card-list">${sellHtml}</div></div>`;
+    }
+
     function renderItemCard(item, options = {}) {
       const statusText = item.status === "approved" ? "已通过" : item.status === "removed" ? "已下架" : "待审核";
       const statusClass = item.status === "approved" ? "ok" : item.status === "removed" ? "warn" : "red";
       const reportAction = options.allowReport
         ? `<button class="report-btn" data-report="${item.id}">举报</button>`
         : "";
+      // 交易状态：已售/已预订 不显示购买按钮
+      const user = window.AuthModule && window.AuthModule.getCurrentUser();
+      const ownItem = user && item.ownerId && item.ownerId === user.studentId;
+      let buyBtn = "";
+      if (options.allowReport && item.status === "approved" && item.txStatus !== "reserved" && item.txStatus !== "sold" && !ownItem) {
+        buyBtn = `<button class="trade-btn primary buy-btn" data-buy="${item.id}">购买 ￥${item.price}</button>`;
+      }
+      const txTag = item.txStatus === "sold"
+        ? `<span class="tag warn">已售</span>`
+        : item.txStatus === "reserved" ? `<span class="tag warn">已预订</span>` : "";
       const isFav = isFavorite(item.id);
       const favBtn = options.allowReport
         ? `<span class="fav-btn" data-fav="${item.id}" style="cursor:pointer;font-size:18px;user-select:none;">${isFav ? "❤️" : "🤍"}</span>`
@@ -1814,6 +2081,7 @@
           <div class="tags">
             ${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
             <span class="tag ${statusClass}">${statusText}</span>
+            ${txTag}
             ${item.reports > 0 ? `<span class="tag warn">${item.reports} 次举报</span>` : ""}
             ${item.phone ? `<span class="tag">📞 ${item.phone}</span>` : ""}
             ${item.email ? `<span class="tag">📧 ${item.email}</span>` : ""}
@@ -1823,6 +2091,7 @@
               <span>匹配度 ${Math.min(item.matchScore ?? item.conditionScore, 100)}%</span>
               <div class="score-bar"><span style="width: ${Math.min(item.matchScore ?? item.conditionScore, 100)}%"></span></div>
             </div>
+            ${buyBtn}
             ${reportAction}
           </div>
         </article>
@@ -2051,6 +2320,7 @@
       renderBuyerResults();
       renderSellerUnmatchedDemands();
       renderAidPool();
+      renderTradePage();
     }
 
     async function syncFromRemote() {
@@ -2753,6 +3023,20 @@
         saveData(data);
       }
 
+      // ===== 交易动作 =====
+      const buyId = event.target.dataset.buy;
+      if (buyId) { buyItem(buyId); return; }
+      const acceptId = event.target.dataset.accept;
+      if (acceptId) { acceptOrder(acceptId); return; }
+      const declineId = event.target.dataset.decline;
+      if (declineId) { declineOrder(declineId); return; }
+      const completeId = event.target.dataset.complete;
+      if (completeId) { completeOrder(completeId); return; }
+      const cancelId = event.target.dataset.cancel;
+      if (cancelId) { cancelOrder(cancelId); return; }
+      if (event.target.dataset.recharge) { openWallet("recharge"); return; }
+      if (event.target.dataset.withdraw) { openWallet("withdraw"); return; }
+
       const aidLock = event.target.dataset.aidLock;
       const aidItem = event.target.dataset.aidItem;
       if (aidLock && aidItem) {
@@ -2789,6 +3073,21 @@
     // 跨页实时同步：审核员在 reviewer.html 的操作会触发 storage 事件，主站自动重渲染
     window.addEventListener("storage", (event) => {
       if (event.key === STORAGE_KEY) renderAll();
+    });
+
+    // ===== 钱包弹窗事件 =====
+    document.getElementById("walletConfirm").addEventListener("click", confirmWallet);
+    document.getElementById("walletCancelBtn").addEventListener("click", () => {
+      document.getElementById("walletModal").classList.remove("active");
+    });
+    document.getElementById("walletClose").addEventListener("click", () => {
+      document.getElementById("walletModal").classList.remove("active");
+    });
+    document.getElementById("walletModal").addEventListener("click", (event) => {
+      if (event.target.id === "walletModal") event.target.classList.remove("active");
+    });
+    document.getElementById("walletAmount").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") confirmWallet();
     });
 
     // ===== 顶栏用户区渲染（头像 + 昵称 + 待认证徽章 + 退出） =====

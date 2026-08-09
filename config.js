@@ -70,7 +70,8 @@
 
     // ---------- 类别（标签唯一来源，去重） ----------
     categories: {
-      supported: ["book", "bottle", "clothing", "backpack", "digital"],
+      // 支持的页面级类别（服装统一用 uniform；clothing 是视觉层别名，经 pageMap 映射到 uniform）
+      supported: ["book", "bottle", "uniform", "backpack", "digital", "lamp"],
       // 中文展示标签（vision / vlm / nlp / index 共用）
       labels: {
         book: "教材",

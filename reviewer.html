@@ -297,6 +297,10 @@
 
     <section class="page" id="pageTrades">
       <div id="tradesStats" class="trade-stats"></div>
+      <div class="trade-ai">
+        <button class="primary-btn" id="aiTradesBtn">🤖 AI 分析交易流水</button>
+        <div id="tradesAIReport" class="ai-report"></div>
+      </div>
       <div class="card-list" id="tradesList"></div>
     </section>
   </main>
@@ -369,6 +373,19 @@
     .trade-stat { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px; box-shadow:var(--shadow); }
     .trade-stat span { color:var(--muted); font-size:13px; }
     .trade-stat strong { display:block; font-size:22px; color:var(--red); margin-top:4px; }
+    .trade-ai { margin-bottom:18px; }
+    #aiTradesBtn { margin-bottom:12px; }
+    .ai-report { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px; box-shadow:var(--shadow); }
+    .ai-report:empty { display:none; }
+    .ai-report .ai-md h3, .ai-report h3 { font-size:15px; color:var(--red); margin:14px 0 6px; }
+    .ai-report .ai-md h4, .ai-report h4 { font-size:14px; margin:10px 0 4px; }
+    .ai-report p { margin:6px 0; line-height:1.7; font-size:14px; }
+    .ai-report ul { margin:4px 0 8px; padding-left:22px; }
+    .ai-report li { margin:3px 0; font-size:14px; line-height:1.6; }
+    .ai-report strong { font-weight:700; }
+    .ai-report .ai-risk { color:var(--bad); font-weight:700; background:#fff1f0; padding:1px 5px; border-radius:4px; }
+    .ai-loading, .ai-empty, .ai-error { color:var(--muted); font-size:14px; padding:6px 0; }
+    .ai-error { color:var(--bad); }
   </style>
   <script src="./config.js"></script>
   <script src="./auth-module.js"></script>
@@ -608,6 +625,95 @@
         : '<div class="empty">暂无交易记录</div>';
     }
 
+    // ===== AI 交易流水分析（脱敏后发 qwen-plus） =====
+    function renderMarkdown(md) {
+      const lines = md.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").split("\n");
+      let out = "";
+      let inList = false;
+      const closeList = () => { if (inList) { out += "</ul>"; inList = false; } };
+      for (const line of lines) {
+        const t = line.trim();
+        if (/^### /.test(t)) { closeList(); out += "<h4>" + t.slice(4) + "</h4>"; }
+        else if (/^## /.test(t)) { closeList(); out += "<h3>" + t.slice(3) + "</h3>"; }
+        else if (/^# /.test(t)) { closeList(); out += "<h3>" + t.slice(2) + "</h3>"; }
+        else if (/^[-*] /.test(t)) { if (!inList) { out += "<ul>"; inList = true; } out += "<li>" + t.slice(2) + "</li>"; }
+        else if (t === "") { closeList(); }
+        else { closeList(); out += "<p>" + t + "</p>"; }
+      }
+      closeList();
+      out = out.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      out = out.replace(/(频繁取消|多次被拒|价格异常|异常|风险|偏高|建议关注)/g, '<span class="ai-risk">$1</span>');
+      return out;
+    }
+
+    async function analyzeTrades() {
+      const orders = data.orders || [];
+      const reportEl = document.getElementById("tradesAIReport");
+      const btn = document.getElementById("aiTradesBtn");
+      if (!orders.length) { reportEl.innerHTML = '<div class="ai-empty">暂无交易数据，无法分析。</div>'; return; }
+
+      // 脱敏：买卖家按首次出现分配稳定别名
+      const buyerMap = {}, sellerMap = {};
+      let bi = 0, si = 0;
+      const L = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const flow = orders.map((o) => ({
+        item: o.itemTitle || "物品",
+        price: o.price,
+        status: o.status,
+        buyer: buyerMap[o.buyerId] || (buyerMap[o.buyerId] = "买家" + L[bi++]),
+        seller: sellerMap[o.sellerId] || (sellerMap[o.sellerId] = "卖家" + L[si++]),
+        time: o.createdAt || ""
+      }));
+
+      // 统计
+      const completed = orders.filter((o) => o.status === "completed");
+      const cancelled = orders.filter((o) => o.status === "cancelled");
+      const declined = orders.filter((o) => o.status === "declined");
+      const volume = completed.reduce((s, o) => s + Number(o.price || 0), 0);
+      const stats = {
+        total: orders.length,
+        completed: completed.length,
+        cancelled: cancelled.length,
+        declined: declined.length,
+        volume,
+        avgPrice: completed.length ? Math.round(volume / completed.length) : 0,
+        completeRate: orders.length ? Math.round((completed.length / orders.length) * 100) : 0
+      };
+
+      btn.disabled = true; btn.textContent = "🤖 分析中…";
+      reportEl.innerHTML = '<div class="ai-loading">正在分析交易流水…</div>';
+
+      const messages = [
+        { role: "system", content: "你是校园二手平台的交易数据分析助手。根据脱敏后的交易流水与统计，输出简明、可执行的 markdown 分析报告。只基于给定的数据分析，不要编造不存在的订单或数字。" },
+        { role: "user", content:
+          "统计：总笔数 " + stats.total + "，成交 " + stats.completed + " 笔，成交额 ￥" + stats.volume +
+          "，完成率 " + stats.completeRate + "%，平均客单价 ￥" + stats.avgPrice +
+          "，取消 " + stats.cancelled + " 笔，拒绝 " + stats.declined + " 笔。\n\n" +
+          "脱敏流水（buyer/seller 已脱敏）：\n" + JSON.stringify(flow) + "\n\n" +
+          "请用 markdown 严格按以下结构输出：\n" +
+          "## 概览\n（一句话整体情况）\n" +
+          "## 异常与风险\n（取消/拒绝率是否偏高、是否有买家频繁取消、卖家多次被拒、价格异常；若无异常请明确说明）\n" +
+          "## 品类洞察\n（哪类物品交易最活跃，从物品名推断）\n" +
+          "## 运营建议\n（2-3 条可执行建议）" }
+      ];
+
+      try {
+        const res = await fetch("/.netlify/functions/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "qwen-plus", messages, temperature: 0.4, max_tokens: 800 })
+        });
+        const payload = await res.json().catch(() => ({}));
+        const content = payload && payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
+        if (!content) throw new Error(payload && payload.error ? payload.error : "AI 未返回内容");
+        reportEl.innerHTML = renderMarkdown(content);
+      } catch (e) {
+        reportEl.innerHTML = '<div class="ai-error">分析失败：' + e.message + '</div>';
+      } finally {
+        btn.disabled = false; btn.textContent = "🤖 AI 分析交易流水";
+      }
+    }
+
     function renderAll() {
       data = loadData();
       renderStats();
@@ -829,6 +935,7 @@
     document.getElementById("statusFilter").addEventListener("change", renderAllItems);
     document.getElementById("searchInput").addEventListener("input", renderAllItems);
     document.getElementById("refreshBtn").addEventListener("click", renderAll);
+    document.getElementById("aiTradesBtn").addEventListener("click", analyzeTrades);
     document.getElementById("userStatusFilter").addEventListener("change", renderUsers);
 
     // 添加审核员

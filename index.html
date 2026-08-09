@@ -1784,8 +1784,17 @@
         .filter((item) => item.status === "approved" && item.aidStatus !== "locked" && item.aidStatus !== "donated" && item.txStatus !== "reserved" && item.txStatus !== "sold" && item.ownerId !== meId)
         .map((item) => {
           const W = (window.AppConfig && window.AppConfig.scoring) || {};
+          const catLabels = (window.AppConfig && window.AppConfig.categories && window.AppConfig.categories.labels) || {};
           let score = 0;
-          if (item.category === demand.category) score += (W.category || 40);
+          // 类别匹配：custom 物品用自定义类目名近似匹配需求类别标签/科目
+          if (item.category === demand.category) {
+            score += (W.category || 40);
+          } else if (item.category === "custom" && item.customCategory) {
+            const label = catLabels[demand.category] || demand.category;
+            if ((demand.subject && item.customCategory.includes(demand.subject)) || item.customCategory.includes(label)) {
+              score += (W.category || 40);
+            }
+          }
           // 科目匹配改为双向“包含”
           if (
             (item.subject && demand.subject && (item.subject.includes(demand.subject) || demand.subject.includes(item.subject)))
@@ -2701,9 +2710,10 @@
       // 1. 先做手部遮挡检测（强制开启）；遮挡则不调用 VLM，直接返回“请重拍”
       const handResult = window.VisionModule
         ? await withTimeout(window.VisionModule.analyzeImage(selectedImageData, { enableHandCheck: true }), 20000, "手部检测超时")
-            .catch(() => ({ handOcclusion: { detected: false, message: "手部检测不可用，已跳过" } }))
+            .catch(() => ({ handOcclusion: { detected: false, available: false, message: "手部检测不可用，已跳过" } }))
         : { handOcclusion: { detected: false, message: "" } };
       const ho = (handResult && handResult.handOcclusion) || { detected: false, message: "" };
+      const handSkipped = (ho.available === false); // 区分“没遮挡”与“检测没跑”
       if (ho.detected) {
         return { retake: true, handMessage: ho.message || "手部遮挡了物品" };
       }
@@ -2724,7 +2734,7 @@
         tags: [],
         description: vlmResult.description || "",
         occlusionWarning: false,
-        handMessage: ho.message || ""
+        handMessage: handSkipped ? ("⚠️ " + (ho.message || "手部检测不可用，已跳过")) : (ho.message || "")
       };
     };
 

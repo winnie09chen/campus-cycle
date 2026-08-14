@@ -1497,6 +1497,53 @@
     .wallet-actions-modal { display:flex; gap:10px; }
     .wallet-actions-modal .trade-btn { flex:1; }
     .wallet-close { position:absolute; top:10px; right:14px; border:0; background:transparent; font-size:22px; color:var(--muted); cursor:pointer; }
+
+    /* ===== 移动端适配（<=600px） ===== */
+    @media (max-width: 600px) {
+      .topbar {
+        padding: 10px 14px;
+        gap: 10px;
+      }
+      .brand { min-width: 0; gap: 8px; }
+      .brand-mark { width: 32px; height: 32px; border-radius: 7px; }
+      .brand-title { font-size: 16px; }
+      .brand-subtitle { display: none; }
+      .tabs {
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .tabs::-webkit-scrollbar { display: none; }
+      .tab-btn { flex: 0 0 auto; min-width: 0; padding: 9px 16px; white-space: nowrap; }
+      .user-area { flex-wrap: wrap; justify-content: flex-end; }
+      .user-area .u-logout { padding: 5px 10px; font-size: 12px; }
+
+      .main { width: calc(100% - 24px); margin-top: 16px; }
+      .panel-head { padding: 14px 16px; }
+      .panel-body { padding: 14px; }
+      .hero { padding: 18px 16px; flex-direction: column; align-items: flex-start; gap: 14px; }
+
+      .two-col { grid-template-columns: 1fr; }
+      .result-grid { grid-template-columns: repeat(2, 1fr); }
+      .aid-summary { grid-template-columns: 1fr; }
+
+      .status-row { flex-wrap: wrap; }
+      .pager { flex-wrap: wrap; gap: 8px; }
+      .upload-area { min-height: 160px; }
+      .upload-area img { height: 160px; }
+
+      .wallet-card { padding: 16px; }
+      .wallet-card .wallet-amount { font-size: 26px; }
+
+      .item-detail-modal { padding: 16px 10px; }
+      .detail-box { padding: 16px; }
+      .camera-box { width: 100%; padding: 10px; }
+      .wallet-modal-content { width: calc(100% - 24px); padding: 18px; }
+
+      body { padding-bottom: env(safe-area-inset-bottom); }
+    }
   </style>
   <!-- 全局配置（必须在所有模块之前加载） -->
   <script src="./config.js"></script>

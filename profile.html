@@ -67,6 +67,16 @@
     .msg.ok { background: #eaf7f0; color: var(--ok); }
 
     .loading { text-align: center; color: var(--muted); padding: 60px 0; }
+
+    @media (max-width: 600px) {
+      .topbar { padding: 0 14px; }
+      .wrap { width: calc(100% - 24px); margin-top: 18px; gap: 12px; }
+      .profile-card { padding: 18px 16px; gap: 12px; }
+      .profile-card .avatar { width: 56px; height: 56px; font-size: 26px; }
+      .pc-name { font-size: 18px; }
+      .section { padding: 16px; }
+      .row { flex-direction: column; align-items: stretch; }
+    }
   </style>
 </head>
 <body>

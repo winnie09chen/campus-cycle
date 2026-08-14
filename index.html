@@ -126,6 +126,43 @@
       box-shadow: 0 6px 18px rgba(32, 36, 42, 0.08);
     }
 
+    /* ===== 移动端菜单按钮（汉堡，默认桌面隐藏） ===== */
+    .tabs-toggle {
+      display: none;
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      flex: 0 0 auto;
+      position: relative;
+      cursor: pointer;
+    }
+    .tabs-toggle:active { transform: scale(0.94); }
+    .tabs-toggle-bars,
+    .tabs-toggle-bars::before,
+    .tabs-toggle-bars::after {
+      position: absolute;
+      left: 50%;
+      width: 18px;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--ink);
+      transition: transform .18s var(--ease), opacity .18s var(--ease);
+    }
+    .tabs-toggle-bars { top: 50%; transform: translate(-50%, -50%); }
+    .tabs-toggle-bars::before,
+    .tabs-toggle-bars::after {
+      content: "";
+      left: 0;
+      transform: translate(0, 0);
+    }
+    .tabs-toggle-bars::before { top: -6px; }
+    .tabs-toggle-bars::after { top: 6px; }
+    .tabs-toggle.open .tabs-toggle-bars { background: transparent; }
+    .tabs-toggle.open .tabs-toggle-bars::before { top: 0; transform: rotate(45deg); }
+    .tabs-toggle.open .tabs-toggle-bars::after { top: 0; transform: rotate(-45deg); }
+
     .admin-toggle {
       border: 1px solid var(--line);
       background: white;
@@ -1093,6 +1130,9 @@
         <button class="tab-btn" data-tab="aid">援助池</button>
         <button class="tab-btn" data-tab="trade">我的交易</button>
       </nav>
+      <button class="tabs-toggle" aria-label="打开功能菜单" aria-expanded="false">
+        <span class="tabs-toggle-bars" aria-hidden="true"></span>
+      </button>
       <div class="user-area" id="userArea"></div>
     </header>
 
@@ -1508,15 +1548,35 @@
       .brand-mark { width: 32px; height: 32px; border-radius: 7px; }
       .brand-title { font-size: 16px; }
       .brand-subtitle { display: none; }
+      .tabs-toggle { display: block; order: 3; margin-left: auto; }
+      body.menu-open .topbar { z-index: 61; }
       .tabs {
-        order: 3;
-        width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
+        display: none;
       }
-      .tabs::-webkit-scrollbar { display: none; }
-      .tab-btn { flex: 0 0 auto; min-width: 0; padding: 9px 16px; white-space: nowrap; }
+      .tabs.open {
+        display: flex;
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 0 20px calc(20px + env(safe-area-inset-bottom));
+        background: white;
+        border-radius: 0;
+        overflow-y: auto;
+        animation: fadeIn .18s var(--ease);
+      }
+      .tabs.open .tab-btn {
+        min-width: 0;
+        width: 100%;
+        text-align: left;
+        padding: 16px 18px;
+        font-size: 16px;
+        border: 1px solid var(--line);
+        background: white;
+      }
+      .tabs.open .tab-btn.active { box-shadow: 0 6px 18px rgba(32, 36, 42, 0.08); }
       .user-area { flex-wrap: wrap; justify-content: flex-end; }
       .user-area .u-logout { padding: 5px 10px; font-size: 12px; }
 
@@ -2487,7 +2547,39 @@
       btn.addEventListener("click", () => {
         buyerPage = 0;
         setTab(btn.dataset.tab);
+        closeTabsMenu();
       });
+    });
+
+    // ===== 移动端功能菜单（汉堡按钮） =====
+    const tabsToggle = document.querySelector(".tabs-toggle");
+    const tabsNav = document.querySelector(".tabs");
+    const topbarEl = document.querySelector(".topbar");
+    function openTabsMenu() {
+      tabsNav.style.paddingTop = (topbarEl.offsetHeight + 16) + "px";
+      tabsNav.classList.add("open");
+      tabsToggle.classList.add("open");
+      tabsToggle.setAttribute("aria-expanded", "true");
+      document.body.classList.add("menu-open");
+      document.body.style.overflow = "hidden";
+    }
+    function closeTabsMenu() {
+      tabsNav.classList.remove("open");
+      tabsToggle.classList.remove("open");
+      tabsToggle.setAttribute("aria-expanded", "false");
+      document.body.classList.remove("menu-open");
+      document.body.style.overflow = "";
+    }
+    tabsToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (tabsNav.classList.contains("open")) closeTabsMenu();
+      else openTabsMenu();
+    });
+    document.addEventListener("click", (e) => {
+      if (tabsNav.classList.contains("open") && !tabsNav.contains(e.target) && !tabsToggle.contains(e.target)) closeTabsMenu();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeTabsMenu();
     });
 
     document.getElementById("submitDemand").addEventListener("click", async () => {

@@ -1759,6 +1759,14 @@
     let remoteSnapshot = "";
     let remoteSaving = false;
 
+    // 带登录会话的请求头（data/ai/image 后端均需鉴权）
+    function authHeaders(extra) {
+      const token = window.AuthModule && window.AuthModule.getToken();
+      const headers = Object.assign({}, extra);
+      if (token) headers["Authorization"] = "Bearer " + token;
+      return headers;
+    }
+
     function normalizeData(value) {
       return {
         ...value,
@@ -1773,7 +1781,7 @@
 
     async function fetchRemoteData() {
       if (location.protocol === "file:") return null;
-      const response = await fetch(REMOTE_DATA_URL, { cache: "no-store" });
+      const response = await fetch(REMOTE_DATA_URL, { cache: "no-store", headers: authHeaders() });
       if (!response.ok) throw new Error("远程数据读取失败：" + response.status);
       const payload = await response.json();
       return payload && payload.data ? normalizeData(payload.data) : null;
@@ -1788,7 +1796,7 @@
         remoteSnapshot = body;
         const response = await fetch(REMOTE_DATA_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders({ "Content-Type": "application/json" }),
           body
         });
         if (!response.ok) throw new Error("远程数据保存失败：" + response.status);
@@ -1805,7 +1813,7 @@
         const imageId = item.imageId || `${item.id}-image`;
         const response = await fetch(REMOTE_IMAGE_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ id: imageId, image: item.image })
         });
         if (!response.ok) throw new Error("图片上传失败：" + response.status);

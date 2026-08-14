@@ -31,9 +31,12 @@
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
+      const headers = { "Content-Type": "application/json" };
+      const token = global.AuthModule && global.AuthModule.getToken();
+      if (token) headers["Authorization"] = "Bearer " + token;
       const response = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           model: MODEL,
           messages,

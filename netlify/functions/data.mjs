@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { requireUser } from "./_shared/auth-guard.mjs";
 
 const STORE_NAME = "campus-cycle";
 const DATA_KEY = "shared-data";
@@ -16,6 +17,9 @@ function json(data, init = {}) {
 }
 
 export default async function handler(request) {
+  const [user, unauthorized] = await requireUser(request);
+  if (!user) return unauthorized;
+
   const store = getStore({ name: STORE_NAME, consistency: "strong" });
 
   if (request.method === "GET") {

@@ -12,7 +12,7 @@
 
 ## 运行方式
 
-> 鉴权（登录/注册/用户审核）依赖 Netlify Functions，**必须用 `netlify dev` 运行**；`python -m http.server` 跑不了登录。
+> 鉴权与业务接口（登录/注册/用户审核/共享数据/AI/图片）依赖 Netlify Functions，**必须用 `netlify dev` 运行**；`python -m http.server` 跑不了登录与鉴权接口。
 
 1. **配置环境变量**：复制 `.env.example` 为 `.env`，填入：
    - `DASHSCOPE_API_KEY`：阿里云百炼 Key（VLM/NLP）
@@ -30,9 +30,16 @@
 ## 账号与登录
 
 - **注册（仅学生）**：邮箱 + 学号 + 邮箱验证码；密码由系统随机生成并通过邮件发送，无需自己设置。注册后状态为「待认证」，需审核员认证后才能发布。
-- **登录**：学号 + 密码。登录后按角色自动分流：学生→`index.html`，审核员→`reviewer.html`。两界面物理隔离、不互跳，各自有严格角色门禁。
+- **登录**：学号 + 密码。登录后按角色自动分流：学生→`index.html`，审核员→`reviewer.html`。两界面物理隔离、不互跳，各自有严格角色门禁。连续输错密码 5 次锁定 10 分钟（防暴力破解）。
 - **审核员职责**：①认证学生身份 ②审核商品 ③处理举报 ④添加新审核员（工作台「添加审核员」按钮，新审核员密码同样邮件发送）。
 - 用户表/验证码/会话存 Netlify Blobs（后端，per-key 存储）；密码用 `pbkdf2` 哈希；前端只存登录 token。
+
+## 接口安全
+
+- **后端接口全部鉴权**：`data` / `ai` / `image(POST)` 均要求 `Authorization: Bearer <token>`（复用登录会话，`netlify/functions/_shared/auth-guard.mjs` 统一校验），未登录返回 401，防止数据被篡改、DashScope 配额被盗刷、图片存储被滥用；`image(GET)` 因 `<img>` 标签无法带请求头而保持开放，图片 id 为不可猜测的 UUID（能力 URL 模式）。
+- **图片上传限制**：base64 解码后约 2MB 上限，超出返回 413。
+- **验证码**：`crypto.randomInt` 密码学安全随机，5 分钟有效、60 秒冷却。
+- **登录防爆破**：失败计数存独立 Blobs store，5 次失败锁 10 分钟，登录成功自动清零；改密码的旧密码校验同样计数。
 
 ## 三角色页面
 

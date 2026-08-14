@@ -1,7 +1,9 @@
-// ===== AI 代理：浏览器 → 本函数 → DashScope =====
+// ===== AI 代理：浏览器 → 本函数 → DashScope（需登录会话） =====
 // Key 只存在 Netlify 环境变量 DASHSCOPE_API_KEY，前端代码不持有任何密钥。
 // 兼容 VLM（qwen-vl-max，messages 含 image_url）与 NLP（qwen-plus）两种调用，
-// 原样转发 chat-completions 请求与响应。
+// 原样转发 chat-completions 请求与响应。要求有效登录会话，防止配额盗刷。
+import { requireUser } from "./_shared/auth-guard.mjs";
+
 const DASHSCOPE_URL =
   "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 
@@ -20,6 +22,9 @@ export default async function handler(request) {
   if (request.method !== "POST") {
     return json({ error: "Method not allowed" }, { status: 405 });
   }
+
+  const [user, unauthorized] = await requireUser(request);
+  if (!user) return unauthorized;
 
   const apiKey = process.env.DASHSCOPE_API_KEY;
   if (!apiKey) {

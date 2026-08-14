@@ -13,7 +13,8 @@ function blobStores() {
   return {
     users: getStore({ name: "campus-cycle-users", consistency: "strong" }),
     codes: getStore({ name: "campus-cycle-codes", consistency: "strong" }),
-    sessions: getStore({ name: "campus-cycle-sessions", consistency: "strong" })
+    sessions: getStore({ name: "campus-cycle-sessions", consistency: "strong" }),
+    fails: getStore({ name: "campus-cycle-loginfails", consistency: "strong" })
   };
 }
 
@@ -56,7 +57,8 @@ function genRandomPassword(len = 8) {
 }
 
 function genCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  // 密码学安全随机（Math.random 可预测）
+  return String(crypto.randomInt(100000, 1000000));
 }
 
 function genToken() {
@@ -178,6 +180,38 @@ async function emailExists(stores, email) {
   return false;
 }
 
+// ---------- 登录失败锁定（防暴力破解） ----------
+const LOGIN_MAX_FAILS = 5;
+const LOGIN_LOCK_MS = 10 * 60 * 1000; // 锁 10 分钟
+
+async function getLoginFails(stores, studentId) {
+  const rec = await stores.fails.get(`loginfails:${studentId}`, { type: "json" });
+  return rec || null; // { count, lockedUntil }
+}
+
+async function assertNotLocked(stores, studentId) {
+  const rec = await getLoginFails(stores, studentId);
+  if (rec && rec.lockedUntil && Date.now() < rec.lockedUntil) {
+    const wait = Math.ceil((rec.lockedUntil - Date.now()) / 60000);
+    return json({ error: `失败次数过多，账号已锁定，请约 ${wait} 分钟后再试` }, { status: 429 });
+  }
+  return null;
+}
+
+async function recordLoginFail(stores, studentId) {
+  const rec = (await getLoginFails(stores, studentId)) || { count: 0 };
+  rec.count += 1;
+  if (rec.count >= LOGIN_MAX_FAILS) {
+    rec.lockedUntil = Date.now() + LOGIN_LOCK_MS;
+    rec.count = 0; // 锁定结束后重新计数
+  }
+  await stores.fails.setJSON(`loginfails:${studentId}`, rec);
+}
+
+async function clearLoginFails(stores, studentId) {
+  await stores.fails.delete(`loginfails:${studentId}`);
+}
+
 // ---------- 各 action ----------
 async function sendCode(payload, stores) {
   const email = String(payload.email || "").trim().toLowerCase();
@@ -268,13 +302,21 @@ async function login(payload, stores) {
   const password = String(payload.password || "");
   if (!studentId || !password) return json({ error: "请输入学号和密码" }, { status: 400 });
 
+  const locked = await assertNotLocked(stores, studentId);
+  if (locked) return locked;
+
   const user = await stores.users.get(`user:${studentId}`, { type: "json" });
-  if (!user) return json({ error: "学号或密码错误" }, { status: 400 });
+  if (!user) {
+    await recordLoginFail(stores, studentId);
+    return json({ error: "学号或密码错误" }, { status: 400 });
+  }
   if (user.status === "rejected") return json({ error: "该账号已被禁用" }, { status: 403 });
   if (hashPassword(password, user.salt) !== user.passwordHash) {
+    await recordLoginFail(stores, studentId);
     return json({ error: "学号或密码错误" }, { status: 400 });
   }
 
+  await clearLoginFails(stores, studentId);
   const token = await createSession(stores, studentId);
   return json({ ok: true, token, user: publicUser(user) });
 }
@@ -366,9 +408,12 @@ async function updateProfile(payload, stores) {
 async function changePassword(payload, stores) {
   const user = await getSessionUser(stores, payload.token);
   if (!user) return json({ error: "未登录或会话已过期" }, { status: 401 });
+  const locked = await assertNotLocked(stores, user.studentId);
+  if (locked) return locked;
   const oldPwd = String(payload.oldPassword || "");
   const newPwd = String(payload.newPassword || "");
   if (hashPassword(oldPwd, user.salt) !== user.passwordHash) {
+    await recordLoginFail(stores, user.studentId);
     return json({ error: "旧密码不正确" }, { status: 400 });
   }
   if (newPwd.length < 6) return json({ error: "新密码至少 6 位" }, { status: 400 });

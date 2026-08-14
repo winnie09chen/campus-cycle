@@ -163,6 +163,9 @@
     .tabs-toggle.open .tabs-toggle-bars::before { top: 0; transform: rotate(45deg); }
     .tabs-toggle.open .tabs-toggle-bars::after { top: 0; transform: rotate(-45deg); }
 
+    /* ===== 菜单内返回按钮（桌面默认隐藏） ===== */
+    .tabs-back { display: none; }
+
     .admin-toggle {
       border: 1px solid var(--line);
       background: white;
@@ -1125,6 +1128,7 @@
         </div>
       </div>
       <nav class="tabs" aria-label="身份切换">
+        <button class="tabs-back" type="button">← 返回</button>
         <button class="tab-btn active" data-tab="buyer">我要买</button>
         <button class="tab-btn" data-tab="seller">我要卖</button>
         <button class="tab-btn" data-tab="aid">援助池</button>
@@ -1577,6 +1581,23 @@
         background: white;
       }
       .tabs.open .tab-btn.active { box-shadow: 0 6px 18px rgba(32, 36, 42, 0.08); }
+      .tabs.open .tabs-back {
+        display: block;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        width: 100%;
+        text-align: left;
+        padding: 12px 18px;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+      }
+      .tabs.open .tabs-back:active { transform: scale(0.98); }
       .user-area { flex-wrap: wrap; justify-content: flex-end; }
       .user-area .u-logout { padding: 5px 10px; font-size: 12px; }
 
@@ -2554,6 +2575,7 @@
     // ===== 移动端功能菜单（汉堡按钮） =====
     const tabsToggle = document.querySelector(".tabs-toggle");
     const tabsNav = document.querySelector(".tabs");
+    const tabsBack = document.querySelector(".tabs-back");
     const topbarEl = document.querySelector(".topbar");
     function openTabsMenu() {
       tabsNav.style.paddingTop = (topbarEl.offsetHeight + 16) + "px";
@@ -2564,7 +2586,9 @@
       document.body.style.overflow = "hidden";
     }
     function closeTabsMenu() {
+      if (!tabsNav.classList.contains("open")) return;
       tabsNav.classList.remove("open");
+      tabsNav.style.paddingTop = "";
       tabsToggle.classList.remove("open");
       tabsToggle.setAttribute("aria-expanded", "false");
       document.body.classList.remove("menu-open");
@@ -2575,11 +2599,16 @@
       if (tabsNav.classList.contains("open")) closeTabsMenu();
       else openTabsMenu();
     });
+    tabsBack.addEventListener("click", closeTabsMenu);
     document.addEventListener("click", (e) => {
       if (tabsNav.classList.contains("open") && !tabsNav.contains(e.target) && !tabsToggle.contains(e.target)) closeTabsMenu();
     });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeTabsMenu();
+    });
+    // 离开移动端断点时自动收起菜单（清理跨断点残留的样式/状态）
+    window.matchMedia("(max-width: 600px)").addEventListener("change", (e) => {
+      if (!e.matches) closeTabsMenu();
     });
 
     document.getElementById("submitDemand").addEventListener("click", async () => {

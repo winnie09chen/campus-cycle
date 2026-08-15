@@ -330,6 +330,19 @@
       to { opacity: 1; }
     }
 
+    .batch-actions { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--bg); border-radius:10px; margin-bottom:12px; }
+    .batch-checkbox { width:18px; height:18px; cursor:pointer; accent-color:var(--red); flex-shrink:0; }
+    .audit-log { background:var(--bg); border-radius:10px; padding:14px; }
+    .audit-log-item { padding:6px 0; border-bottom:1px solid var(--line); font-size:13px; }
+    .audit-log-item:last-child { border-bottom:0; }
+    .review-item { background:var(--bg); border-radius:10px; padding:14px; margin-bottom:10px; }
+    .review-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .review-reply { background:#fff; border-radius:8px; padding:10px; margin-top:8px; border-left:3px solid var(--red); }
+    .primary-btn { background:var(--red); color:#fff; border:0; border-radius:8px; padding:9px 18px; font-weight:700; cursor:pointer; }
+    .primary-btn:hover { background:var(--red-dark); transform:translateY(-1px); }
+    .ghost-btn { border:1px solid var(--line); background:#fff; border-radius:8px; padding:9px 18px; cursor:pointer; font-weight:700; }
+    .ghost-btn:hover { transform:translateY(-1px); }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.001ms !important;
@@ -367,6 +380,13 @@
     <div class="stat"><span>待认证用户</span><strong id="statPendingUsers">0</strong></div>
   </div>
 
+  <div class="main" style="width: min(1100px, calc(100% - 48px)); margin: 20px auto 0;">
+    <div class="audit-log" id="auditLogSection">
+      <h4 style="margin-bottom:10px;">操作日志（最近 20 条）</h4>
+      <div id="auditLogList"></div>
+    </div>
+  </div>
+
   <main class="main">
     <nav class="tabs">
       <button class="tabs-back" type="button">← 返回</button>
@@ -376,9 +396,16 @@
       <button class="tab-btn" data-tab="all">全部物品</button>
       <button class="tab-btn" data-tab="users">用户审核</button>
       <button class="tab-btn" data-tab="trades">交易总览</button>
+      <button class="tab-btn" data-tab="reviews">评价管理</button>
     </nav>
 
     <section class="page active" id="pagePending">
+      <div class="batch-actions" id="batchActions" style="display:none;">
+        <span id="batchCount" style="font-size:14px;color:var(--muted);margin-right:8px;">已选 0 项</span>
+        <button class="primary-btn" id="batchApprove" style="background:var(--ok);">批量通过</button>
+        <button class="ghost-btn" id="batchReject" style="color:var(--bad);border-color:var(--bad);">批量驳回</button>
+        <button class="ghost-btn" id="batchClear">取消选择</button>
+      </div>
       <div class="card-list" id="pendingList">
         <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div></div>
         <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div></div>
@@ -425,6 +452,11 @@
         <div id="tradesAIReport" class="ai-report"></div>
       </div>
       <div class="card-list" id="tradesList"></div>
+    </section>
+
+    <section class="page" id="pageReviews">
+      <h3 style="margin-bottom:16px;">评价管理</h3>
+      <div id="reviewList"></div>
     </section>
   </main>
 
@@ -511,119 +543,37 @@
     .ai-error { color:var(--bad); }
   </style>
   <script src="./config.js"></script>
+  <script src="./utils.js"></script>
+  <script src="./data-module.js"></script>
+  <script src="./notify-module.js"></script>
   <script src="./auth-module.js"></script>
   <script>
     // ===== 审核员工作台 =====
     // @author: 同学C - 审核治理 + 整体集成
     // 与 index.html 共享 localStorage 数据，读写同一份物品池
     const STORAGE_KEY = (window.AppConfig && window.AppConfig.storageKeys && window.AppConfig.storageKeys.data) || "campus_cycle_demo_v1";
-    const categoryMap = {
-      book: "教材", uniform: "校服", lamp: "台灯",
-      backpack: "书包", bottle: "水杯", clothing: "校服/正装", digital: "数码配件", custom: "其他"
-    };
-
-    function getCategoryLabel(itemOrCategory) {
-      if (typeof itemOrCategory === "object" && itemOrCategory) {
-        return itemOrCategory.customCategory || categoryMap[itemOrCategory.category] || itemOrCategory.category || "其他";
-      }
-      return categoryMap[itemOrCategory] || itemOrCategory || "其他";
-    }
+    var DM = window.DataModule;
+    var NM = window.NotifyModule;
+    var U = window.Utils;
+    var categoryMap = DM.categoryMap;
+    function getCategoryLabel(itemOrCategory) { return DM.getCategoryLabel(itemOrCategory); }
+    function escapeHTML(value) { return U.escapeHTML(value); }
 
     let data = loadData();
     let editingId = null;
 
-    function loadData() {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) return { items: [], demands: [], aidNeeds: [], orders: [], balances: {} };
-      try {
-        const parsed = JSON.parse(stored);
-        return {
-          ...parsed,
-          items: Array.isArray(parsed.items) ? parsed.items : [],
-          demands: Array.isArray(parsed.demands) ? parsed.demands : [],
-          aidNeeds: Array.isArray(parsed.aidNeeds) ? parsed.aidNeeds : [],
-          orders: Array.isArray(parsed.orders) ? parsed.orders : [],
-          balances: (parsed.balances && typeof parsed.balances === "object") ? parsed.balances : {}
-        };
-      } catch (e) {
-        return { items: [], demands: [], aidNeeds: [], orders: [], balances: {} };
-      }
-    }
-
-    function stripStoredImages(value) {
-      return {
-        ...value,
-        items: (value.items || []).map((item) => ({
-          ...item,
-          image: item.image && !String(item.image).startsWith("data:") ? item.image : ""
-        })),
-        currentDraft: value.currentDraft ? { ...value.currentDraft, image: "" } : null
-      };
-    }
+    function loadData() { return DM.loadData(); }
+    function saveData() { DM.saveData(data); renderAll(); }
+    function stripStoredImages(v) { return DM.stripStoredImages(v); }
+    function addNotification(recipientId, type, title, body, meta) { NM.addNotification(data, recipientId, type, title, body, meta); }
+    async function fetchRemoteData() { return DM.fetchRemoteData(); }
+    async function pushRemoteData(v) { return DM.pushRemoteData(v); }
+    function authHeaders(extra) { return DM.authHeaders(extra); }
 
     const REMOTE_DATA_URL = "/.netlify/functions/data";
     const REMOTE_SYNC_MS = 3000;
     let remoteSnapshot = "";
     let remoteSaving = false;
-
-    // 带登录会话的请求头（data/ai 后端均需鉴权）
-    function authHeaders(extra) {
-      const token = window.AuthModule && window.AuthModule.getToken();
-      const headers = Object.assign({}, extra);
-      if (token) headers["Authorization"] = "Bearer " + token;
-      return headers;
-    }
-
-    function normalizeData(value) {
-      return {
-        ...value,
-        items: Array.isArray(value.items) ? value.items : [],
-        demands: Array.isArray(value.demands) ? value.demands : [],
-        aidNeeds: Array.isArray(value.aidNeeds) ? value.aidNeeds : [],
-        orders: Array.isArray(value.orders) ? value.orders : [],
-        balances: (value.balances && typeof value.balances === "object") ? value.balances : {},
-        currentDraft: value.currentDraft || null
-      };
-    }
-
-    async function fetchRemoteData() {
-      if (location.protocol === "file:") return null;
-      const response = await fetch(REMOTE_DATA_URL, { cache: "no-store", headers: authHeaders() });
-      if (!response.ok) throw new Error("远程数据读取失败：" + response.status);
-      const payload = await response.json();
-      return payload && payload.data ? normalizeData(payload.data) : null;
-    }
-
-    async function pushRemoteData(value) {
-      if (location.protocol === "file:") return;
-      remoteSaving = true;
-      try {
-        const clean = stripStoredImages(value);
-        const body = JSON.stringify(clean);
-        remoteSnapshot = body;
-        const response = await fetch(REMOTE_DATA_URL, {
-          method: "POST",
-          headers: authHeaders({ "Content-Type": "application/json" }),
-          body
-        });
-        if (!response.ok) throw new Error("远程数据保存失败：" + response.status);
-      } catch (error) {
-        console.warn("远程同步失败，已保留本地数据：", error.message);
-      } finally {
-        remoteSaving = false;
-      }
-    }
-
-    function saveData() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch (error) {
-        console.warn("localStorage 写入失败，已移除图片后重试：", error.message);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(stripStoredImages(data)));
-      }
-      renderAll();
-      pushRemoteData(data);
-    }
 
     // 统一渲染一张审核卡片（待审核/举报/全部共用）
     function renderCard(item, actionsHtml) {
@@ -634,11 +584,12 @@
         .filter((t) => t !== "待审核")
         .map((t) => `<span class="tag ${/遮挡|重拍|举报/.test(t) ? "warn" : ""}">${t}</span>`)
         .join("");
+      var checkboxHtml = '<input type="checkbox" class="batch-checkbox" data-item-id="' + item.id + '" style="margin-right:8px;">';
       return `
         <article class="review-card">
           ${thumb}
           <div class="rc-body">
-            <div class="rc-title">${item.title || "未命名物品"}</div>
+            <div class="rc-title">${checkboxHtml}${item.title || "未命名物品"}</div>
             <div class="rc-meta">${getCategoryLabel(item)} · 置信度 ${Math.round((item.confidence || 0) * 100)}% · ￥${item.price ?? "-"} · ${item.campus || item.major || "-"}</div>
             <div class="rc-ai"><span class="label">AI描述：</span>${item.description || "（无）"}</div>
             ${tagsHtml ? `<div class="tags">${tagsHtml}</div>` : ""}
@@ -853,6 +804,9 @@
       renderAidLocked();
       renderAllItems();
       renderTrades();
+      renderAuditLogs();
+      renderReviewManagement();
+      bindBatchEvents();
     }
 
     async function syncFromRemote() {
@@ -884,6 +838,13 @@
       if (!it) return;
       it.status = "approved";
       it.tags = (it.tags || []).filter((t) => t !== "待审核");
+      addNotification(
+        it.ownerId,
+        "item_approved",
+        "审核通过提醒",
+        `你的「${it.title || it.subject || "物品"}」已审核通过，买家现在可以看到并购买。`,
+        { itemId: it.id }
+      );
       saveData();
     }
 
@@ -960,6 +921,13 @@
         .split(/[,，]/).map((s) => s.trim()).filter(Boolean);
       it.tags = ["审核修正", ...tags];
       it.status = "approved";
+      addNotification(
+        it.ownerId,
+        "item_approved",
+        "审核通过提醒",
+        `你的「${it.title || it.subject || "物品"}」已由审核员修正后通过，买家现在可以看到并购买。`,
+        { itemId: it.id }
+      );
       editingId = null;
       document.getElementById("editModal").classList.remove("active");
       saveData();
@@ -1040,9 +1008,13 @@
       btn.addEventListener("click", () => {
         document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b === btn));
         document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
-        document.getElementById("page" + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1)).classList.add("active");
-        if (btn.dataset.tab === "users") renderUsers();
-        if (btn.dataset.tab === "trades") renderTrades();
+        var tabName = btn.dataset.tab;
+        var pageId = "page" + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+        var pageEl = document.getElementById(pageId);
+        if (pageEl) pageEl.classList.add("active");
+        if (tabName === "users") renderUsers();
+        if (tabName === "trades") renderTrades();
+        if (tabName === "reviews") renderReviewManagement();
         closeTabsMenu();
       });
     });
@@ -1155,6 +1127,159 @@
     window.addEventListener("storage", (event) => {
       if (event.key === STORAGE_KEY) renderAll();
     });
+
+    // ===== 批量操作 =====
+    var selectedItems = new Set();
+
+    function toggleItemSelection(itemId, checked) {
+      if (checked) selectedItems.add(itemId);
+      else selectedItems.delete(itemId);
+      updateBatchUI();
+    }
+
+    function updateBatchUI() {
+      var batchActions = document.getElementById('batchActions');
+      var batchCount = document.getElementById('batchCount');
+      if (batchActions) {
+        batchActions.style.display = selectedItems.size > 0 ? 'flex' : 'none';
+      }
+      if (batchCount) {
+        batchCount.textContent = '已选 ' + selectedItems.size + ' 项';
+      }
+    }
+
+    function clearSelection() {
+      selectedItems.clear();
+      document.querySelectorAll('.batch-checkbox').forEach(function(cb) { cb.checked = false; });
+      updateBatchUI();
+    }
+
+    async function batchApprove() {
+      if (selectedItems.size === 0) return;
+      var confirmed = await Utils.confirmDialog('确认批量通过 ' + selectedItems.size + ' 个物品的审核？', '批量审核');
+      if (!confirmed) return;
+
+      data.items.forEach(function(item) {
+        if (selectedItems.has(item.id)) {
+          item.status = 'approved';
+          addNotification(item.ownerId, 'success', '物品审核通过', '你的物品「' + (item.title || item.subject) + '」已通过审核，已上架。');
+        }
+      });
+
+      if (!Array.isArray(data.auditLogs)) data.auditLogs = [];
+      data.auditLogs.push({
+        id: Utils.generateId('audit'),
+        reviewerId: Auth.getUser().studentId,
+        action: 'batch_approve',
+        itemIds: Array.from(selectedItems),
+        count: selectedItems.size,
+        timestamp: new Date().toISOString()
+      });
+
+      clearSelection();
+      saveData();
+      Utils.showToast('已批量通过 ' + selectedItems.size + ' 个物品', 'success');
+    }
+
+    async function batchReject() {
+      if (selectedItems.size === 0) return;
+      var confirmed = await Utils.confirmDialog('确认批量驳回 ' + selectedItems.size + ' 个物品的审核？', '批量驳回');
+      if (!confirmed) return;
+
+      data.items.forEach(function(item) {
+        if (selectedItems.has(item.id)) {
+          item.status = 'rejected';
+          addNotification(item.ownerId, 'warn', '物品审核未通过', '你的物品「' + (item.title || item.subject) + '」未通过审核，请修改后重新提交。');
+        }
+      });
+
+      if (!Array.isArray(data.auditLogs)) data.auditLogs = [];
+      data.auditLogs.push({
+        id: Utils.generateId('audit'),
+        reviewerId: Auth.getUser().studentId,
+        action: 'batch_reject',
+        itemIds: Array.from(selectedItems),
+        count: selectedItems.size,
+        timestamp: new Date().toISOString()
+      });
+
+      clearSelection();
+      saveData();
+      Utils.showToast('已批量驳回 ' + selectedItems.size + ' 个物品', 'warn');
+    }
+
+    function bindBatchEvents() {
+      document.querySelectorAll('.batch-checkbox').forEach(function(cb) {
+        cb.onchange = function() {
+          toggleItemSelection(this.dataset.itemId, this.checked);
+        };
+      });
+
+      var approveBtn = document.getElementById('batchApprove');
+      var rejectBtn = document.getElementById('batchReject');
+      var clearBtn = document.getElementById('batchClear');
+      if (approveBtn) approveBtn.onclick = batchApprove;
+      if (rejectBtn) rejectBtn.onclick = batchReject;
+      if (clearBtn) clearBtn.onclick = clearSelection;
+    }
+
+    // ===== 评价管理 =====
+    function renderReviewManagement() {
+      var container = document.getElementById('reviewList');
+      if (!container) return;
+      if (!Array.isArray(data.reviews) || data.reviews.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px;">暂无评价记录</p>';
+        return;
+      }
+
+      container.innerHTML = data.reviews.slice().reverse().map(function(review) {
+        var item = data.items.find(function(i) { return i.id === review.itemId; });
+        var stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+        return [
+          '<div class="review-item">',
+          '<div class="review-header">',
+          '<strong>' + escapeHTML(item ? item.title : '未知物品') + '</strong>',
+          '<span style="color:#f5a623;">' + stars + '</span>',
+          '</div>',
+          '<p style="font-size:14px;color:var(--ink);">' + escapeHTML(review.text || '无文字评价') + '</p>',
+          '<div style="font-size:12px;color:var(--muted);margin-top:4px;">',
+          '评价人: ' + escapeHTML(review.reviewerId) + ' · 被评人: ' + escapeHTML(review.revieweeId) + ' · ' + (review.createdAt || '').slice(0,10),
+          '</div>',
+          review.reply ? '<div class="review-reply"><strong>卖家回复：</strong>' + escapeHTML(review.reply) + '</div>' : '',
+          '<div style="margin-top:8px;">',
+          '<button class="ghost-btn" data-delete-review="' + review.id + '" style="color:var(--bad);font-size:12px;">删除异常评价</button>',
+          '</div>',
+          '</div>'
+        ].join('');
+      }).join('');
+
+      container.querySelectorAll('[data-delete-review]').forEach(function(btn) {
+        btn.onclick = async function() {
+          var reviewId = this.dataset.deleteReview;
+          var confirmed = await Utils.confirmDialog('确认删除此评价？此操作不可撤销。', '删除评价');
+          if (!confirmed) return;
+          data.reviews = data.reviews.filter(function(r) { return r.id !== reviewId; });
+          saveData();
+          Utils.showToast('评价已删除', 'success');
+          renderReviewManagement();
+        };
+      });
+    }
+
+    // ===== 审计日志 =====
+    function renderAuditLogs() {
+      var container = document.getElementById('auditLogList');
+      if (!container) return;
+      if (!Array.isArray(data.auditLogs) || data.auditLogs.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted);font-size:13px;">暂无操作日志</p>';
+        return;
+      }
+      container.innerHTML = data.auditLogs.slice().reverse().slice(0, 20).map(function(log) {
+        var actionLabel = log.action === 'batch_approve' ? '批量通过' : log.action === 'batch_reject' ? '批量驳回' : log.action;
+        return '<div class="audit-log-item"><strong>' + escapeHTML(log.reviewerId) + '</strong> ' +
+          actionLabel + ' ' + (log.count || 0) + ' 项 · ' + (log.timestamp || '').slice(0, 19) + '</div>';
+      }).join('');
+    }
 
     // ===== 鉴权门禁：仅审核员可进入工作台；未登录/角色不符 → 跳登录页 =====
     (async function () {

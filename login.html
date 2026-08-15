@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23c8192e'/><text x='32' y='32' font-size='38' font-weight='800' fill='%23fff' text-anchor='middle' dominant-baseline='central' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif'>候</text></svg>" />
   <title>登录 · 物候</title>
+  <link rel="stylesheet" href="./common.css" />
   <style>
     :root {
-      --red: #c8192e; --red-dark: #9f1426; --red-soft: #fff1f3;
-      --ink: #20242a; --muted: #68707d; --line: #e6e8ec; --bg: #f7f8fa; --card: #fff;
-      --ok: #168a52; --bad: #b42318; --shadow: 0 16px 40px rgba(32,36,42,.08);
+      /* token 统一由 common.css 提供 */
     }
     * { box-sizing: border-box; }
     body {
@@ -17,8 +16,15 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
       display: flex; align-items: center; justify-content: center; padding: 24px;
     }
-    .card { width: 100%; max-width: 400px; background: var(--card); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
-    .head { background: var(--red); color: #fff; padding: 24px 28px; }
+    .card { width: 100%; max-width: 400px; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; position: relative; }
+    .head { background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%); color: #fff; padding: 24px 28px; position: relative; overflow: hidden; }
+    .head::after {
+      content: "";
+      position: absolute; right: 14px; bottom: 10px; width: 110px; height: 62px;
+      background-image: radial-gradient(circle at 6px 6px, rgba(255,255,255,.35) 2.5px, transparent 3px);
+      background-size: 22px 18px;
+      transform: rotate(-4deg);
+    }
     .head .brand { display: flex; align-items: center; gap: 12px; }
     .head .mark { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; }
     .head .title { font-size: 20px; font-weight: 700; }

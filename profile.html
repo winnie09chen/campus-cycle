@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23c8192e'/><text x='32' y='32' font-size='38' font-weight='800' fill='%23fff' text-anchor='middle' dominant-baseline='central' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif'>候</text></svg>" />
   <title>个人中心 · 物候</title>
+  <link rel="stylesheet" href="./common.css" />
   <style>
     :root {
-      --red: #c8192e; --red-dark: #9f1426; --red-soft: #fff1f3;
-      --ink: #20242a; --muted: #68707d; --line: #e6e8ec; --bg: #f7f8fa; --card: #fff;
-      --ok: #168a52; --warn: #b56a00; --bad: #b42318;
-      --shadow: 0 16px 40px rgba(32,36,42,.08); --shadow-btn: 0 6px 16px rgba(32,36,42,.12);
-      --ease: cubic-bezier(0.4,0,0.2,1);
+      /* token 统一由 common.css 提供 */
     }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink);
@@ -89,7 +86,7 @@
   </header>
 
   <div class="wrap">
-    <div class="loading" id="loading">加载中…</div>
+    <div class="loading-block" id="loading"><span class="spinner"></span>正在恢复登录会话…</div>
 
     <div class="profile-card" id="profileCard" style="display:none;"></div>
 

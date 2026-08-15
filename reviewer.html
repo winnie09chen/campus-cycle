@@ -5,21 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23c8192e'/><text x='32' y='32' font-size='38' font-weight='800' fill='%23fff' text-anchor='middle' dominant-baseline='central' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif'>候</text></svg>" />
   <title>物候 · 审核员工作台</title>
+  <link rel="stylesheet" href="./common.css" />
   <style>
     :root {
-      --red: #c8192e;
-      --red-dark: #9f1426;
-      --ink: #20242a;
-      --muted: #68707d;
-      --line: #e6e8ec;
-      --bg: #f7f8fa;
-      --ok: #168a52;
-      --warn: #b56a00;
-      --bad: #b42318;
-      --card: #ffffff;
-      --shadow: 0 16px 40px rgba(32, 36, 42, 0.08);
-      --ease: cubic-bezier(0.4, 0, 0.2, 1);
-      --shadow-btn: 0 6px 16px rgba(32, 36, 42, 0.12);
+      /* token 统一由 common.css 提供 */
     }
     * { box-sizing: border-box; }
     body {
@@ -198,10 +187,7 @@
     .top-actions .primary-btn { width: auto; }
     .modal-actions .primary-btn { width: auto; }
 
-    .empty {
-      color: var(--muted); text-align: center; padding: 40px 12px;
-      border: 1px dashed var(--line); border-radius: 8px; background: #fafafa;
-    }
+    /* .empty 空状态组件统一定义于 common.css（手账风：装饰圆 + 标题 + 描述） */
 
     .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
     .filters select, .filters input {
@@ -234,6 +220,21 @@
     }
     .field textarea { min-height: 90px; resize: vertical; line-height: 1.6; }
     .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+
+    /* ===== 设计系统统一层（token 见 common.css；置于末尾覆盖散落样式） ===== */
+    .review-card,
+    .modal-content,
+    .ai-report {
+      border-radius: var(--radius-lg);
+    }
+    .stats-strip,
+    .stats-strip .stat {
+      border-radius: var(--radius-md);
+    }
+    /* 手账风：统计条暖底 + tab 激活加重 */
+    .stats-strip .stat strong { color: var(--gold); }
+    .tabs { border-radius: var(--radius-md); }
+    .tab-btn.active { font-weight: 800; }
 
     @media (max-width: 760px) {
       .stats-strip { grid-template-columns: repeat(2, 1fr); }
@@ -378,7 +379,10 @@
     </nav>
 
     <section class="page active" id="pagePending">
-      <div class="card-list" id="pendingList"></div>
+      <div class="card-list" id="pendingList">
+        <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div></div>
+        <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div></div>
+      </div>
     </section>
 
     <section class="page" id="pageReport">
@@ -669,7 +673,7 @@
             <button class="danger-btn" data-remove="${it.id}">驳回下架</button>
             <button class="ghost-btn" data-edit="${it.id}">修改后通过</button>
           `)).join("")
-        : `<div class="empty">暂无待审核物品（卖家提交后会实时出现在这里）</div>`;
+        : `<div class="empty"><div class="empty-deco">📋</div><div class="empty-title">暂无待审核物品</div><div class="empty-desc">卖家提交后会实时出现在这里，喝口茶等等吧</div></div>`;
     }
 
     function renderReport() {
@@ -749,7 +753,7 @@
               '</div>' +
             '</article>';
           }).join("")
-        : '<div class="empty">暂无交易记录</div>';
+        : `<div class="empty"><div class="empty-deco">🧾</div><div class="empty-title">暂无交易记录</div><div class="empty-desc">有同学开始交易后，这里会出现订单流水与 AI 分析入口</div></div>`;
     }
 
     // ===== AI 交易流水分析（脱敏后发 qwen-plus） =====
@@ -807,7 +811,7 @@
         completeRate: orders.length ? Math.round((completed.length / orders.length) * 100) : 0
       };
 
-      btn.disabled = true; btn.textContent = "🤖 分析中…";
+      btn.disabled = true; btn.classList.add("is-loading"); btn.textContent = "🤖 分析中…";
       reportEl.innerHTML = '<div class="ai-loading">正在分析交易流水…</div>';
 
       const messages = [
@@ -837,7 +841,7 @@
       } catch (e) {
         reportEl.innerHTML = '<div class="ai-error">分析失败：' + e.message + '</div>';
       } finally {
-        btn.disabled = false; btn.textContent = "🤖 AI 分析交易流水";
+        btn.disabled = false; btn.classList.remove("is-loading"); btn.textContent = "🤖 AI 分析交易流水";
       }
     }
 
@@ -1002,7 +1006,7 @@
               </div>
             </article>
           `).join("")
-        : `<div class="empty">暂无符合条件的用户</div>`;
+        : `<div class="empty"><div class="empty-deco">👥</div><div class="empty-title">暂无符合条件的用户</div><div class="empty-desc">新同学注册后会出现在这里等待认证</div></div>`;
     }
 
     async function verifyUserDo(studentId) {
@@ -1041,6 +1045,19 @@
         if (btn.dataset.tab === "trades") renderTrades();
         closeTabsMenu();
       });
+    });
+
+    // ===== 弹窗通用交互：遮罩点击 + ESC 关闭 =====
+    document.querySelectorAll(".modal").forEach((modal) => {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) { modal.classList.remove("active"); editingId = null; }
+      });
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const open = document.querySelector(".modal.active");
+        if (open) { open.classList.remove("active"); editingId = null; }
+      }
     });
 
     // ===== 移动端功能菜单（汉堡按钮） =====

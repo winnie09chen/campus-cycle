@@ -1,0 +1,263 @@
+/* ==================================================================
+   物候 · 共享样式基座（common.css）
+   —— 设计 token 唯一来源 + 全站通用组件（加载/空态/骨架屏）
+   温暖手账风：纸感底色、柔和圆角、暖金点缀。
+   各页面在 <style> 之前的 <link> 引入本文件；
+   页面专属布局样式仍留在各自 <style> 中，token 以此处为准。
+   ================================================================== */
+
+:root {
+  /* ---- 品牌色 ---- */
+  --red: #c8192e;
+  --red-dark: #9f1426;
+  --red-soft: #fff1f3;
+
+  /* ---- 点缀色（温暖手账风） ---- */
+  --gold: #b45309;          /* 暖金：荣誉/援助/价格强调 */
+  --gold-soft: #fdf3e3;     /* 暖金底 */
+  --leaf: #168a52;          /* 墨绿：成功/环保 */
+  --leaf-soft: #eaf7f0;
+
+  /* ---- 中性色 ---- */
+  --ink: #20242a;
+  --muted: #68707d;
+  --line: #e8e4dc;          /* 带暖调的边线 */
+  --bg: #faf8f4;            /* 纸感底色 */
+  --bg-deep: #f3efe8;       /* 纸感深一档 */
+  --card: #ffffff;
+  --cream: #fffdf9;         /* 卡片内奶油底 */
+
+  /* ---- 语义色 ---- */
+  --ok: #168a52;
+  --warn: #b56a00;
+  --bad: #b42318;
+
+  /* ---- 圆角 / 阴影 / 动效 ---- */
+  --radius-lg: 14px;        /* 卡片 / 弹窗 */
+  --radius-md: 10px;        /* 中型块 */
+  --radius-sm: 8px;         /* 控件 / 按钮 */
+  --shadow: 0 16px 40px rgba(48, 40, 28, 0.08);
+  --shadow-soft: 0 4px 14px rgba(48, 40, 28, 0.06);
+  --shadow-btn: 0 6px 16px rgba(48, 40, 28, 0.14);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---- 间距刻度（4 的倍数） ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+}
+
+/* ============ 基础 ============ */
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+::selection {
+  background: rgba(200, 25, 46, 0.16);
+}
+
+/* 键盘可达性：统一 focus 轮廓 */
+:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+
+/* 表单控件默认 focus 红环（补齐 reviewer/profile 等未定义页面） */
+.field input:focus,
+.field textarea:focus,
+.field select:focus,
+.filters input:focus,
+.filters select:focus {
+  border-color: var(--red) !important;
+  box-shadow: 0 0 0 3px rgba(200, 25, 46, 0.12);
+}
+
+/* ============ 加载反馈体系 ============ */
+
+/* 环形 spinner（行内 / 独立均可） */
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(200, 25, 46, 0.18);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: -4px;
+}
+.spinner.sm { width: 14px; height: 14px; border-width: 2px; vertical-align: -3px; }
+.spinner.lg { width: 26px; height: 26px; border-width: 3px; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 按钮 loading 态：<button class="... is-loading"> */
+button.is-loading {
+  pointer-events: none;
+  opacity: 0.85;
+  position: relative;
+}
+button.is-loading::before {
+  content: "";
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: -3px;
+  animation: spin .7s linear infinite;
+  opacity: 0.9;
+}
+
+/* 区块加载态（面板内居中提示） */
+.loading-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 42px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.loading-block .spinner { width: 26px; height: 26px; border-width: 3px; }
+
+/* 骨架屏（卡片列表加载占位） */
+.skeleton-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: var(--card);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.skeleton-thumb {
+  width: 84px;
+  height: 84px;
+  border-radius: var(--radius-sm);
+  flex: 0 0 auto;
+}
+.skeleton-lines { flex: 1; display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+.skeleton-line { height: 13px; border-radius: 6px; }
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w40 { width: 40%; }
+.skeleton-line.w80 { width: 80%; }
+.skeleton-thumb,
+.skeleton-line {
+  background: linear-gradient(100deg, var(--bg-deep) 40%, #faf6ee 50%, var(--bg-deep) 60%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+.skeleton-banner {
+  height: 118px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(100deg, var(--bg-deep) 40%, #faf6ee 50%, var(--bg-deep) 60%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  from { background-position: 120% 0; }
+  to { background-position: -80% 0; }
+}
+
+/* ============ 空状态组件 ============ */
+/* 用法：
+   <div class="empty">
+     <div class="empty-deco">emoji 或装饰</div>
+     <div class="empty-title">还没有物品</div>
+     <div class="empty-desc">上传第一件闲置，让它流向需要的人</div>
+     <button class="empty-cta">去发布 →</button>   可选
+   </div> */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 38px 24px;
+  text-align: center;
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--cream);
+  animation: fadeInUp .26s var(--ease);
+}
+.empty-deco {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  margin-bottom: 6px;
+  box-shadow: inset 0 0 0 5px #fff, 0 6px 16px rgba(48, 40, 28, 0.07);
+}
+.empty-title {
+  font-weight: 760;
+  font-size: 15px;
+  color: var(--ink);
+}
+.empty-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 300px;
+}
+.empty-cta {
+  margin-top: 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--red);
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 9px 20px;
+  cursor: pointer;
+  transition: transform .18s var(--ease), background-color .18s var(--ease), box-shadow .18s var(--ease);
+}
+.empty-cta:hover {
+  background: var(--red-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-btn);
+}
+.empty-cta:active { transform: scale(0.96); }
+
+/* ============ 弹窗通用（配合 JS 遮罩/ESC） ============ */
+.modal-scroll-lock { overflow: hidden; }
+
+/* ============ 微动效 ============ */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 减少动态（无障碍） */
+@media (prefers-reduced-motion: reduce) {
+  .spinner,
+  button.is-loading::before,
+  .skeleton-thumb,
+  .skeleton-line,
+  .skeleton-banner {
+    animation-duration: 0.01s;
+    animation-iteration-count: 1;
+  }
+}

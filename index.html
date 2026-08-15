@@ -5,22 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23c8192e'/><text x='32' y='32' font-size='38' font-weight='800' fill='%23fff' text-anchor='middle' dominant-baseline='central' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif'>候</text></svg>" />
   <title>物候</title>
+  <link rel="stylesheet" href="./common.css" />
   <style>
     :root {
-      --red: #c8192e;
-      --red-dark: #9f1426;
-      --red-soft: #fff1f3;
-      --ink: #20242a;
-      --muted: #68707d;
-      --line: #e6e8ec;
-      --bg: #f7f8fa;
-      --ok: #168a52;
-      --warn: #b56a00;
-      --bad: #b42318;
-      --card: #ffffff;
-      --shadow: 0 16px 40px rgba(32, 36, 42, 0.08);
-      --ease: cubic-bezier(0.4, 0, 0.2, 1);
-      --shadow-btn: 0 6px 16px rgba(32, 36, 42, 0.12);
+      /* token 统一由 common.css 提供 */
     }
 
     * {
@@ -1056,14 +1044,7 @@
       margin-top: 12px;
     }
 
-    .empty {
-      color: var(--muted);
-      text-align: center;
-      padding: 30px 12px;
-      border: 1px dashed var(--line);
-      border-radius: 8px;
-      background: #fafafa;
-    }
+    /* .empty 空状态组件统一定义于 common.css（手账风：装饰圆 + 标题 + 描述 + CTA） */
 
     @media (max-width: 960px) {
       .topbar {
@@ -1142,8 +1123,28 @@
 
     <main class="main">
       <section class="hero">
-        <div>
+        <div class="hero-main">
           <h1>让毕业闲置流向真正需要的人</h1>
+          <p>拍一张照片，AI 帮你识别、定价、写文案 —— 学长学姐的好物，等你接棒 ♻</p>
+        </div>
+        <div class="hero-doodle" aria-hidden="true">
+          <svg class="doodle doodle-book" viewBox="0 0 48 48" fill="none">
+            <path d="M8 12 Q24 6 24 12 V38 Q24 32 8 38 Z" stroke="#b45309" stroke-width="2" stroke-linejoin="round" fill="#fdf3e3"/>
+            <path d="M40 12 Q24 6 24 12 V38 Q24 32 40 38 Z" stroke="#b45309" stroke-width="2" stroke-linejoin="round" fill="#fffdf9"/>
+            <path d="M14 20 Q18 18 21 19" stroke="#b45309" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M14 25 Q18 23 21 24" stroke="#b45309" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <svg class="doodle doodle-lamp" viewBox="0 0 48 48" fill="none">
+            <path d="M20 8 L30 8 L34 18 L16 18 Z" stroke="#c8192e" stroke-width="2" stroke-linejoin="round" fill="#fff1f3"/>
+            <path d="M25 18 V34" stroke="#c8192e" stroke-width="2" stroke-linecap="round"/>
+            <path d="M16 38 Q25 33 34 38" stroke="#c8192e" stroke-width="2" stroke-linecap="round"/>
+            <path d="M22 22 L20 26 M27 22 L29 26" stroke="#b45309" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <svg class="doodle doodle-cup" viewBox="0 0 48 48" fill="none">
+            <path d="M14 16 H32 V32 Q32 38 23 38 Q14 38 14 32 Z" stroke="#168a52" stroke-width="2" stroke-linejoin="round" fill="#eaf7f0"/>
+            <path d="M32 20 Q38 20 38 25 Q38 30 32 29" stroke="#168a52" stroke-width="2" stroke-linecap="round"/>
+            <path d="M20 12 Q20 8 24 8 Q28 8 28 11" stroke="#168a52" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 3"/>
+          </svg>
         </div>
         <div class="hero-stat">
           <div class="stat"><strong id="statItems">0</strong><span>在架物品</span></div>
@@ -1211,7 +1212,10 @@
               <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-bottom:12px;cursor:pointer;user-select:none;">
                 <input type="checkbox" id="favFilter" /> 仅显示收藏的物品
               </label>
-              <div class="card-list" id="buyerResults"></div>
+              <div class="card-list" id="buyerResults">
+                <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div></div>
+                <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div></div>
+              </div>
             </div>
           </div>
         </div>
@@ -1542,6 +1546,47 @@
     .wallet-actions-modal .trade-btn { flex:1; }
     .wallet-close { position:absolute; top:10px; right:14px; border:0; background:transparent; font-size:22px; color:var(--muted); cursor:pointer; }
 
+    /* ===== 设计系统统一层（token 见 common.css；置于末尾覆盖散落样式） ===== */
+    .hero,
+    .panel,
+    .detail-box,
+    .camera-box,
+    .wallet-modal-content {
+      border-radius: var(--radius-lg);
+    }
+    .item-card,
+    .aid-card,
+    .order-card,
+    .stat {
+      border-radius: var(--radius-md);
+    }
+    /* 手账风：hero 暖渐变 + 面板头奶油底 */
+    .hero {
+      background: linear-gradient(135deg, #ffffff 0%, var(--gold-soft) 130%);
+    }
+    .hero-stat .stat strong { color: var(--gold); }
+    .panel-head {
+      background: var(--cream);
+      border-bottom: 1px dashed var(--line);
+    }
+    .panel-head h2 { font-weight: 800; }
+    /* hero 手账涂鸦 */
+    .hero-main { min-width: 0; }
+    .hero-doodle {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .doodle { width: 44px; height: 44px; opacity: 0.9; }
+    .doodle-book { transform: rotate(-8deg) translateY(4px); }
+    .doodle-lamp { width: 52px; height: 52px; transform: translateY(-2px); }
+    .doodle-cup { transform: rotate(6deg) translateY(6px); }
+    .doodle { transition: transform .3s var(--ease); }
+    .hero:hover .doodle-book { transform: rotate(-4deg) translateY(0); }
+    .hero:hover .doodle-lamp { transform: translateY(-6px); }
+    .hero:hover .doodle-cup { transform: rotate(2deg) translateY(2px); }
+
     /* ===== 移动端适配（<=600px） ===== */
     @media (max-width: 600px) {
       .topbar {
@@ -1605,6 +1650,7 @@
       .panel-head { padding: 14px 16px; }
       .panel-body { padding: 14px; }
       .hero { padding: 18px 16px; flex-direction: column; align-items: flex-start; gap: 14px; }
+      .hero-doodle { display: none; }
 
       .two-col { grid-template-columns: 1fr; }
       .result-grid { grid-template-columns: repeat(2, 1fr); }
@@ -2139,6 +2185,7 @@
       document.getElementById("walletAmount").value = "";
       m.dataset.mode = mode;
       m.classList.add("active");
+      document.body.classList.add("modal-scroll-lock");
     }
     function confirmWallet() {
       const m = document.getElementById("walletModal");
@@ -2355,7 +2402,7 @@
       const el = document.getElementById("buyerResults");
       const cards = pageItems.length
         ? pageItems.map((item) => renderItemCard(item, { allowReport: true })).join("")
-        : `<div class="empty">${keyword ? "没有匹配的搜索结果" : "暂无可推荐物品"}</div>`;
+        : `<div class="empty"><div class="empty-deco">🧺</div><div class="empty-title">${keyword ? "没有找到相关物品" : "暂无可推荐物品"}</div><div class="empty-desc">${keyword ? "换个关键词试试，或直接发布一条需求，让 AI 帮你匹配" : "发布一条需求，AI 会把学长学姐的闲置好物推荐给你"}</div></div>`;
       const pager = list.length
         ? `<div class="pager">
              <button class="ghost-btn" data-prev="1" ${buyerPage === 0 ? "disabled" : ""}>上一页</button>
@@ -2628,8 +2675,13 @@
         return;
       }
       document.getElementById("demandError").style.display = "none";
+      const demandBtn = document.getElementById("submitDemand");
+      demandBtn.disabled = true;
+      demandBtn.classList.add("is-loading");
+      demandBtn.textContent = "AI 解析中…";
       document.getElementById("buyerParseMode").textContent = "解析中";
       document.getElementById("buyerParseStatus").textContent = "正在使用阿里云百炼 Qwen 解析买家需求...";
+      try {
       const parsed = window.parseDemand ? await window.parseDemand(text) : parseDemandFallback(text);
       const _du = window.AuthModule.getCurrentUser();
       const demand = {
@@ -2660,6 +2712,11 @@
       lastDemand = demand;
       buyerPage = 0;
       renderBuyerResults();
+      } finally {
+        demandBtn.disabled = false;
+        demandBtn.classList.remove("is-loading");
+        demandBtn.textContent = "确认需求并匹配";
+      }
     });
 
     document.getElementById("submitAidNeed").addEventListener("click", async () => {
@@ -2670,6 +2727,7 @@
 
       const btn = document.getElementById("submitAidNeed");
       btn.disabled = true;
+      btn.classList.add("is-loading");
       btn.textContent = "AI 解析中...";
       document.getElementById("aidParseMode").textContent = "解析中";
       document.getElementById("aidParseStatus").textContent = "正在使用阿里云百炼 Qwen 解析援助申请...";
@@ -2719,6 +2777,7 @@
       setTab("aid");
       alert(buildAidContribution(aidNeed, null));
       btn.disabled = false;
+      btn.classList.remove("is-loading");
       btn.textContent = "提交援助需求并匹配";
     });
 
@@ -2945,6 +3004,7 @@
       let note = "";
 
       btn.disabled = true;
+      btn.classList.add("is-loading");
       try {
         if (window.detectItem && hasImage) {
           btn.textContent = "识别中（首次需加载模型）…";
@@ -3029,6 +3089,7 @@
         console.error("[analyzeItem]", err);
       } finally {
         btn.disabled = false;
+        btn.classList.remove("is-loading");
         btn.textContent = "生成物品信息";
       }
     });
@@ -3043,6 +3104,7 @@
       const btn = document.getElementById("regenerateBtn");
       const hint = document.getElementById("analyzeHint");
       btn.disabled = true;
+      btn.classList.add("is-loading");
       btn.textContent = "重新生成中…";
       try {
         // 用手动选择的类别覆盖检测结果
@@ -3070,6 +3132,7 @@
         console.error("[regenerate]", err);
       } finally {
         btn.disabled = false;
+        btn.classList.remove("is-loading");
         btn.textContent = "用修正后的类别重新生成文案";
       }
     });
@@ -3170,18 +3233,26 @@
       document.getElementById("detailContact").textContent = contact.join("    ");
 
       modal.classList.add("show");
+      document.body.classList.add("modal-scroll-lock");
     }
 
     // 关闭详情弹窗：点遮罩 / × 按钮
     document.getElementById("itemDetailModal").addEventListener("click", (event) => {
       if (event.target === event.currentTarget || event.target.id === "itemDetailClose") {
-        event.currentTarget.classList.remove("show");
+        closeItemDetailModal();
       }
     });
-    // ESC 关闭详情弹窗
+    function closeItemDetailModal() {
+      document.getElementById("itemDetailModal").classList.remove("show");
+      document.body.classList.remove("modal-scroll-lock");
+    }
+    // ESC 关闭弹窗（详情 / 钱包 / 摄像头）
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
-        document.getElementById("itemDetailModal").classList.remove("show");
+        closeItemDetailModal();
+        closeWalletModal();
+        const cam = document.getElementById("cameraModal");
+        if (cam.classList.contains("show")) stopCamera();
       }
     });
 
@@ -3277,15 +3348,15 @@
     });
 
     // ===== 钱包弹窗事件 =====
+    function closeWalletModal() {
+      document.getElementById("walletModal").classList.remove("active");
+      document.body.classList.remove("modal-scroll-lock");
+    }
     document.getElementById("walletConfirm").addEventListener("click", confirmWallet);
-    document.getElementById("walletCancelBtn").addEventListener("click", () => {
-      document.getElementById("walletModal").classList.remove("active");
-    });
-    document.getElementById("walletClose").addEventListener("click", () => {
-      document.getElementById("walletModal").classList.remove("active");
-    });
+    document.getElementById("walletCancelBtn").addEventListener("click", closeWalletModal);
+    document.getElementById("walletClose").addEventListener("click", closeWalletModal);
     document.getElementById("walletModal").addEventListener("click", (event) => {
-      if (event.target.id === "walletModal") event.target.classList.remove("active");
+      if (event.target.id === "walletModal") closeWalletModal();
     });
     document.getElementById("walletAmount").addEventListener("keydown", (event) => {
       if (event.key === "Enter") confirmWallet();

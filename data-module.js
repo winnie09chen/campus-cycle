@@ -210,5 +210,37 @@
   DataModule.getStorageKey = function () { return STORAGE_KEY; };
   DataModule.getSeedData = function () { return seedData; };
 
+  /** 周期性远程同步（模块状态为唯一真相源，页面不再持有副本） */
+  let syncTimer = null;
+  DataModule.syncFromRemote = async function () {
+    if (remoteSaving) return;
+    try {
+      const remoteData = await DataModule.fetchRemoteData();
+      if (!remoteData) {
+        if (!remoteSyncReady) await DataModule.pushRemoteData(DataModule.loadData());
+        remoteSyncReady = true;
+        return;
+      }
+      const nextSnapshot = JSON.stringify(DataModule.stripStoredImages(remoteData));
+      if (nextSnapshot !== remoteSnapshot) {
+        remoteSnapshot = nextSnapshot;
+        localStorage.setItem(STORAGE_KEY, nextSnapshot);
+        if (typeof DataModule.onRemoteChange === 'function') DataModule.onRemoteChange();
+      }
+      remoteSyncReady = true;
+    } catch (error) {
+      console.warn('远程数据读取失败，继续使用本地数据：', error.message);
+    }
+  };
+
+  /** 启动远程同步；onChange 为远端变化时的回调（如 renderAll） */
+  DataModule.initSync = function (onChange) {
+    DataModule.onRemoteChange = onChange;
+    DataModule.syncFromRemote();
+    if (location.protocol !== 'file:' && !syncTimer) {
+      syncTimer = setInterval(DataModule.syncFromRemote, REMOTE_SYNC_MS);
+    }
+  };
+
   global.DataModule = DataModule;
 })(window);

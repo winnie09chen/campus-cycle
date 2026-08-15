@@ -566,32 +566,27 @@
     function saveData() { DM.saveData(data); renderAll(); }
     function stripStoredImages(v) { return DM.stripStoredImages(v); }
     function addNotification(recipientId, type, title, body, meta) { NM.addNotification(data, recipientId, type, title, body, meta); }
-    async function fetchRemoteData() { return DM.fetchRemoteData(); }
-    async function pushRemoteData(v) { return DM.pushRemoteData(v); }
     function authHeaders(extra) { return DM.authHeaders(extra); }
 
-    const REMOTE_DATA_URL = "/.netlify/functions/data";
-    const REMOTE_SYNC_MS = 3000;
-    let remoteSnapshot = "";
-    let remoteSaving = false;
+    const REMOTE_SYNC_MS = DM.getRemoteSyncMs();
 
     // 统一渲染一张审核卡片（待审核/举报/全部共用）
     function renderCard(item, actionsHtml) {
       const thumb = item.image
-        ? `<img src="${item.image}" alt="物品图" />`
+        ? `<img src="${escapeHTML(item.image)}" alt="物品图" />`
         : `<div class="thumb-placeholder">无图片</div>`;
       const tagsHtml = (item.tags || [])
         .filter((t) => t !== "待审核")
-        .map((t) => `<span class="tag ${/遮挡|重拍|举报/.test(t) ? "warn" : ""}">${t}</span>`)
+        .map((t) => `<span class="tag ${/遮挡|重拍|举报/.test(t) ? "warn" : ""}">${escapeHTML(t)}</span>`)
         .join("");
-      var checkboxHtml = '<input type="checkbox" class="batch-checkbox" data-item-id="' + item.id + '" style="margin-right:8px;">';
+      var checkboxHtml = '<input type="checkbox" class="batch-checkbox" data-item-id="' + escapeHTML(item.id) + '" style="margin-right:8px;">';
       return `
         <article class="review-card">
           ${thumb}
           <div class="rc-body">
-            <div class="rc-title">${checkboxHtml}${item.title || "未命名物品"}</div>
-            <div class="rc-meta">${getCategoryLabel(item)} · 置信度 ${Math.round((item.confidence || 0) * 100)}% · ￥${item.price ?? "-"} · ${item.campus || item.major || "-"}</div>
-            <div class="rc-ai"><span class="label">AI描述：</span>${item.description || "（无）"}</div>
+            <div class="rc-title">${checkboxHtml}${escapeHTML(item.title || "未命名物品")}</div>
+            <div class="rc-meta">${escapeHTML(getCategoryLabel(item))} · 置信度 ${Math.round((item.confidence || 0) * 100)}% · ￥${Number(item.price) || 0} · ${escapeHTML(item.campus || item.major || "-")}</div>
+            <div class="rc-ai"><span class="label">AI描述：</span>${escapeHTML(item.description || "（无）")}</div>
             ${tagsHtml ? `<div class="tags">${tagsHtml}</div>` : ""}
             <div class="rc-actions">${actionsHtml}</div>
           </div>
@@ -620,9 +615,9 @@
       const list = document.getElementById("pendingList");
       list.innerHTML = pending.length
         ? pending.map((it) => renderCard(it, `
-            <button class="ok-btn" data-approve="${it.id}">通过</button>
-            <button class="danger-btn" data-remove="${it.id}">驳回下架</button>
-            <button class="ghost-btn" data-edit="${it.id}">修改后通过</button>
+            <button class="ok-btn" data-approve="${escapeHTML(it.id)}">通过</button>
+            <button class="danger-btn" data-remove="${escapeHTML(it.id)}">驳回下架</button>
+            <button class="ghost-btn" data-edit="${escapeHTML(it.id)}">修改后通过</button>
           `)).join("")
         : `<div class="empty"><div class="empty-deco">📋</div><div class="empty-title">暂无待审核物品</div><div class="empty-desc">卖家提交后会实时出现在这里，喝口茶等等吧</div></div>`;
     }
@@ -632,9 +627,9 @@
       const list = document.getElementById("reportList");
       list.innerHTML = reported.length
         ? reported.map((it) => renderCard(it, `
-            <span class="tag bad">${it.reports} 次举报</span>
-            <button class="ghost-btn" data-clear="${it.id}">忽略举报</button>
-            <button class="danger-btn" data-remove="${it.id}">违规下架</button>
+            <span class="tag bad">${Number(it.reports) || 0} 次举报</span>
+            <button class="ghost-btn" data-clear="${escapeHTML(it.id)}">忽略举报</button>
+            <button class="danger-btn" data-remove="${escapeHTML(it.id)}">违规下架</button>
           `)).join("")
         : `<div class="empty">暂无被举报物品</div>`;
     }
@@ -646,13 +641,13 @@
         ? locked.map((it) => {
             const need = (data.aidNeeds || []).find((entry) => entry.id === it.lockedAidId);
             const needInfo = need
-              ? `<div class="rc-ai"><span class="label">锁定申请：</span>${need.studentCode || "脱敏编号缺失"} · ${getCategoryLabel(need)} · ${need.urgency || "-"} · ${need.text || ""}</div>`
+              ? `<div class="rc-ai"><span class="label">锁定申请：</span>${escapeHTML(need.studentCode || "脱敏编号缺失")} · ${escapeHTML(getCategoryLabel(need))} · ${escapeHTML(need.urgency || "-")} · ${escapeHTML(need.text || "")}</div>`
               : `<div class="rc-ai"><span class="label">锁定申请：</span>未找到对应援助申请。</div>`;
             return renderCard(it, `
               ${needInfo}
               <span class="tag warn">援助锁定</span>
-              <button class="ok-btn" data-aid-complete="${it.lockedAidId || ""}">完成援助</button>
-              <button class="ghost-btn" data-aid-release="${it.lockedAidId || ""}">取消锁定</button>
+              <button class="ok-btn" data-aid-complete="${escapeHTML(it.lockedAidId || "")}">完成援助</button>
+              <button class="ghost-btn" data-aid-release="${escapeHTML(it.lockedAidId || "")}">取消锁定</button>
             `);
           }).join("")
         : `<div class="empty">暂无援助锁定物品（主站援助池锁定后会出现在这里）</div>`;
@@ -699,8 +694,8 @@
             const cls = o.status === "completed" ? "" : (o.status === "cancelled" || o.status === "declined" ? "bad" : "warn");
             return '<article class="review-card" style="grid-template-columns:1fr;">' +
               '<div class="rc-body">' +
-                '<div class="rc-title">' + (o.itemTitle || "物品") + ' <span class="tag ' + cls + '">' + orderStatusText(o.status) + '</span></div>' +
-                '<div class="rc-meta">￥' + o.price + ' · 买家 ' + (o.buyerName || o.buyerId || "-") + ' · 卖家 ' + (o.sellerName || o.sellerId || "-") + ' · ' + (o.createdAt || "") + '</div>' +
+                '<div class="rc-title">' + escapeHTML(o.itemTitle || "物品") + ' <span class="tag ' + cls + '">' + orderStatusText(o.status) + '</span></div>' +
+                '<div class="rc-meta">￥' + (Number(o.price) || 0) + ' · 买家 ' + escapeHTML(o.buyerName || o.buyerId || "-") + ' · 卖家 ' + escapeHTML(o.sellerName || o.sellerId || "-") + ' · ' + escapeHTML(o.createdAt || "") + '</div>' +
               '</div>' +
             '</article>';
           }).join("")
@@ -790,7 +785,7 @@
         if (!content) throw new Error(payload && payload.error ? payload.error : "AI 未返回内容");
         reportEl.innerHTML = renderMarkdown(content);
       } catch (e) {
-        reportEl.innerHTML = '<div class="ai-error">分析失败：' + e.message + '</div>';
+        reportEl.innerHTML = '<div class="ai-error">分析失败：' + escapeHTML(e.message) + '</div>';
       } finally {
         btn.disabled = false; btn.classList.remove("is-loading"); btn.textContent = "🤖 AI 分析交易流水";
       }
@@ -809,28 +804,7 @@
       bindBatchEvents();
     }
 
-    async function syncFromRemote() {
-      if (remoteSaving) return;
-      try {
-        const remoteData = await fetchRemoteData();
-        if (!remoteData) return;
-        const nextSnapshot = JSON.stringify(stripStoredImages(remoteData));
-        if (nextSnapshot !== remoteSnapshot) {
-          remoteSnapshot = nextSnapshot;
-          localStorage.setItem(STORAGE_KEY, nextSnapshot);
-          renderAll();
-        }
-      } catch (error) {
-        console.warn("远程数据读取失败，继续使用本地数据：", error.message);
-      }
-    }
-
-    function initRemoteSync() {
-      syncFromRemote();
-      if (location.protocol !== "file:") {
-        setInterval(syncFromRemote, REMOTE_SYNC_MS);
-      }
-    }
+    // 远程同步已下沉至 data-module.js（DM.initSync(renderAll)），模块状态为唯一真相源
 
     // ===== 审核动作 =====
     function approve(id) {
@@ -952,7 +926,7 @@
         const body = await window.AuthModule.listUsers(null);
         all = body.users || [];
       } catch (e) {
-        list.innerHTML = `<div class="empty">用户列表加载失败：${e.message}</div>`;
+        list.innerHTML = `<div class="empty">用户列表加载失败：${escapeHTML(e.message)}</div>`;
         return;
       }
       document.getElementById("statPendingUsers").textContent =
@@ -962,13 +936,13 @@
       list.innerHTML = usersList.length
         ? usersList.map((u) => `
             <article class="review-card">
-              <div style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:24px;background:${(u.avatar && u.avatar.color) || "#c8192e"};flex:0 0 auto;">${(u.avatar && u.avatar.letter) || "?"}</div>
+              <div style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:24px;background:${/^[#][0-9a-fA-F]{3,8}$/.test((u.avatar && u.avatar.color) || "") ? u.avatar.color : "#c8192e"};flex:0 0 auto;">${escapeHTML((u.avatar && u.avatar.letter) || "?")}</div>
               <div class="rc-body">
-                <div class="rc-title">${u.nickname || u.studentId} <span class="tag">${u.role === "reviewer" ? "审核员" : "学生"}</span> ${userStatusTag(u)}</div>
-                <div class="rc-meta">学号 ${u.studentId} · ${u.email || "无邮箱"}</div>
+                <div class="rc-title">${escapeHTML(u.nickname || u.studentId)} <span class="tag">${u.role === "reviewer" ? "审核员" : "学生"}</span> ${userStatusTag(u)}</div>
+                <div class="rc-meta">学号 ${escapeHTML(u.studentId)} · ${escapeHTML(u.email || "无邮箱")}</div>
                 <div class="rc-actions">
                   ${u.role === "student" && u.status === "pending"
-                    ? `<button class="ok-btn" data-user-verify="${u.studentId}">通过认证</button><button class="danger-btn" data-user-reject="${u.studentId}">拒绝</button>`
+                    ? `<button class="ok-btn" data-user-verify="${escapeHTML(u.studentId)}">通过认证</button><button class="danger-btn" data-user-reject="${escapeHTML(u.studentId)}">拒绝</button>`
                     : ""}
                 </div>
               </div>
@@ -1169,7 +1143,7 @@
       if (!Array.isArray(data.auditLogs)) data.auditLogs = [];
       data.auditLogs.push({
         id: Utils.generateId('audit'),
-        reviewerId: Auth.getUser().studentId,
+        reviewerId: (window.AuthModule.getCurrentUser() || {}).studentId || '',
         action: 'batch_approve',
         itemIds: Array.from(selectedItems),
         count: selectedItems.size,
@@ -1196,7 +1170,7 @@
       if (!Array.isArray(data.auditLogs)) data.auditLogs = [];
       data.auditLogs.push({
         id: Utils.generateId('audit'),
-        reviewerId: Auth.getUser().studentId,
+        reviewerId: (window.AuthModule.getCurrentUser() || {}).studentId || '',
         action: 'batch_reject',
         itemIds: Array.from(selectedItems),
         count: selectedItems.size,
@@ -1287,7 +1261,7 @@
       if (!ok) return;
       updateUserArea();
       renderAll();
-      initRemoteSync();
+      DM.initSync(renderAll);
       renderUsers();
       setInterval(renderUsers, REMOTE_SYNC_MS); // 定期刷新用户审核列表
     })();

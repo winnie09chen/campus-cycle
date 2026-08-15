@@ -1753,17 +1753,10 @@
     function loadData() { return DM.loadData(); }
     function saveData(d) { DM.saveData(d); renderAll(); }
     function stripStoredImages(v) { return DM.stripStoredImages(v); }
-    function normalizeData(v) { return DM.normalizeData(v); }
     async function fetchRemoteData() { return DM.fetchRemoteData(); }
     async function pushRemoteData(v) { return DM.pushRemoteData(v); }
     async function uploadRemoteImage(item) { return DM.uploadRemoteImage(item); }
-    function authHeaders(extra) { return DM.authHeaders(extra); }
-    var REMOTE_DATA_URL = DM.getRemoteDataUrl();
     var REMOTE_IMAGE_URL = DM.getRemoteImageUrl();
-    var REMOTE_SYNC_MS = DM.getRemoteSyncMs();
-    var remoteSyncReady = DM.getRemoteState().remoteSyncReady;
-    var remoteSnapshot = DM.getRemoteState().remoteSnapshot;
-    var remoteSaving = DM.getRemoteState().remoteSaving;
 
     let data = loadData();
     let selectedImageData = "";
@@ -1778,7 +1771,6 @@
 
     function escapeHTML(value) { return U.escapeHTML(value); }
 
-    function ensureNotifications() { if (!Array.isArray(data.notifications)) data.notifications = []; return data.notifications; }
     function addNotification(recipientId, type, title, body, meta) { NM.addNotification(data, recipientId, type, title, body, meta); }
     function getMyNotifications() { return NM.getMyNotifications(data); }
     function unreadMessageCount() { return NM.unreadCount(data); }
@@ -2189,17 +2181,17 @@
     function renderOrderCard(o, side) {
       let actions = "";
       if (side === "buy") {
-        if (o.status === "paid" || o.status === "accepted") actions = `<button class="trade-btn ghost" data-cancel="${o.id}">取消订单</button>`;
-        if (o.status === "accepted") actions += `<button class="trade-btn primary" data-complete="${o.id}">确认收货</button>`;
+        if (o.status === "paid" || o.status === "accepted") actions = `<button class="trade-btn ghost" data-cancel="${escapeHTML(o.id)}">取消订单</button>`;
+        if (o.status === "accepted") actions += `<button class="trade-btn primary" data-complete="${escapeHTML(o.id)}">确认收货</button>`;
       } else {
-        if (o.status === "paid") actions = `<button class="trade-btn primary" data-accept="${o.id}">接受</button><button class="trade-btn ghost" data-decline="${o.id}">拒绝</button>`;
-        if (o.status === "accepted") actions = `<button class="trade-btn primary" data-complete="${o.id}">完成交易</button>`;
+        if (o.status === "paid") actions = `<button class="trade-btn primary" data-accept="${escapeHTML(o.id)}">接受</button><button class="trade-btn ghost" data-decline="${escapeHTML(o.id)}">拒绝</button>`;
+        if (o.status === "accepted") actions += `<button class="trade-btn primary" data-complete="${escapeHTML(o.id)}">完成交易</button>`;
       }
-      const other = side === "buy" ? ("卖家：" + (o.sellerName || o.sellerId || "-")) : ("买家：" + (o.buyerName || o.buyerId || "-"));
+      const other = side === "buy" ? ("卖家：" + escapeHTML(o.sellerName || o.sellerId || "-")) : ("买家：" + escapeHTML(o.buyerName || o.buyerId || "-"));
       return `
         <article class="order-card">
-          <div class="order-title">${o.itemTitle || "物品"}</div>
-          <div class="order-meta">￥${o.price} · ${other} · ${o.createdAt || ""}</div>
+          <div class="order-title">${escapeHTML(o.itemTitle || "物品")}</div>
+          <div class="order-meta">￥${Number(o.price) || 0} · ${other} · ${escapeHTML(o.createdAt || "")}</div>
           <div class="order-status">${orderStatusText(o.status)}</div>
           <div class="order-actions">${actions}</div>
         </article>`;
@@ -2242,7 +2234,7 @@
       const ownItem = user && item.ownerId && item.ownerId === user.studentId;
       let buyBtn = "";
       if (options.allowReport && item.status === "approved" && item.txStatus !== "reserved" && item.txStatus !== "sold" && !ownItem) {
-        buyBtn = `<button class="trade-btn primary buy-btn" data-buy="${item.id}">购买 ￥${item.price}</button>`;
+        buyBtn = `<button class="trade-btn primary buy-btn" data-buy="${escapeHTML(item.id)}">购买 ￥${Number(item.price) || 0}</button>`;
       }
       const txTag = item.txStatus === "sold"
         ? `<span class="tag warn">已售</span>`
@@ -2252,30 +2244,30 @@
         ? `<span class="fav-btn" data-fav="${item.id}" style="cursor:pointer;font-size:18px;user-select:none;">${isFav ? "❤️" : "🤍"}</span>`
         : "";
       const thumb = item.image
-        ? `<div class="card-thumb" data-detail="${item.id}"><img src="${item.image}" alt="实物图" /><span class="zoom-hint">🔍 点击查看详情</span></div>`
-        : `<div class="card-thumb placeholder" data-detail="${item.id}">暂无实物图</div>`;
+        ? `<div class="card-thumb" data-detail="${escapeHTML(item.id)}"><img src="${escapeHTML(item.image)}" alt="实物图" /><span class="zoom-hint">🔍 点击查看详情</span></div>`
+        : `<div class="card-thumb placeholder" data-detail="${escapeHTML(item.id)}">暂无实物图</div>`;
       return `
         <article class="item-card">
           ${thumb}
           <div class="item-top">
             <div>
-              <div class="item-title">${item.title}</div>
-              <div class="meta">${getCategoryLabel(item)} · ${item.major} · ${item.subject}</div>
+              <div class="item-title">${escapeHTML(item.title)}</div>
+              <div class="meta">${escapeHTML(getCategoryLabel(item))} · ${escapeHTML(item.major)} · ${escapeHTML(item.subject)}</div>
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
-              <div class="price">￥${item.price}</div>
+              <div class="price">￥${Number(item.price) || 0}</div>
               ${favBtn}
             </div>
           </div>
-          <p class="description">${item.description}</p>
+          <p class="description">${escapeHTML(item.description)}</p>
           <div class="tags">
-            ${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
+            ${item.tags.map((tag) => `<span class="tag">${escapeHTML(tag)}</span>`).join("")}
             <span class="tag ${statusClass}">${statusText}</span>
             ${txTag}
-            ${item.reports > 0 ? `<span class="tag warn">${item.reports} 次举报</span>` : ""}
-            ${item.phone ? `<span class="tag">📞 ${item.phone}</span>` : ""}
-            ${item.email ? `<span class="tag">📧 ${item.email}</span>` : ""}
-            ${item.ownerName ? `<span class="tag">👤 ${item.ownerName}</span>` : ""}
+            ${item.reports > 0 ? `<span class="tag warn">${Number(item.reports) || 0} 次举报</span>` : ""}
+            ${item.phone ? `<span class="tag">📞 ${escapeHTML(item.phone)}</span>` : ""}
+            ${item.email ? `<span class="tag">📧 ${escapeHTML(item.email)}</span>` : ""}
+            ${item.ownerName ? `<span class="tag">👤 ${escapeHTML(item.ownerName)}</span>` : ""}
           </div>
           ${renderReputationBadge(item.ownerId)}
           <div class="status-row">
@@ -2305,9 +2297,6 @@
       history.unshift(keyword);
       if (history.length > 10) history = history.slice(0, 10);
       try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history)); } catch (e) {}
-    }
-    function clearSearchHistory() {
-      try { localStorage.removeItem(SEARCH_HISTORY_KEY); } catch (e) {}
     }
 
     // ===== 收藏功能 =====
@@ -2535,38 +2524,12 @@
       renderStats();
       renderBuyerResults();
       renderSellerUnmatchedDemands();
-      renderAidPool();
-      renderTradePage();
-      updateUserArea();
-    }
+       renderAidPool();
+       renderTradePage();
+       updateUserArea();
+     }
 
-    async function syncFromRemote() {
-      if (remoteSaving) return;
-      try {
-        const remoteData = await fetchRemoteData();
-        if (!remoteData) {
-          if (!remoteSyncReady) await pushRemoteData(loadData());
-          remoteSyncReady = true;
-          return;
-        }
-        const nextSnapshot = JSON.stringify(stripStoredImages(remoteData));
-        if (nextSnapshot !== remoteSnapshot) {
-          remoteSnapshot = nextSnapshot;
-          localStorage.setItem(STORAGE_KEY, nextSnapshot);
-          renderAll();
-        }
-        remoteSyncReady = true;
-      } catch (error) {
-        console.warn("远程数据读取失败，继续使用本地数据：", error.message);
-      }
-    }
-
-    function initRemoteSync() {
-      syncFromRemote();
-      if (location.protocol !== "file:") {
-        setInterval(syncFromRemote, REMOTE_SYNC_MS);
-      }
-    }
+    // 远程同步已下沉至 data-module.js（DM.initSync(renderAll)），模块状态为唯一真相源
 
     function updateSellerResult(result) {
       clearRetake(); // 正常识别结果：清除可能存在的重拍横幅、恢复提交按钮
@@ -2586,7 +2549,7 @@
     function renderTags() {
       const tags = (data.currentDraft && data.currentDraft.tags) || [];
       const html = tags
-        .map((tag) => `<span class="tag red">${tag}<i class="rm" data-rmtag="${tag}">×</i></span>`)
+        .map((tag) => `<span class="tag red">${escapeHTML(tag)}<i class="rm" data-rmtag="${escapeHTML(tag)}">×</i></span>`)
         .join("");
       document.getElementById("resultTags").innerHTML = html || "";
       // 仅在有草稿时显示标签编辑器
@@ -2731,7 +2694,7 @@
       saveData(data);
       // 对话只保留：引导语 + 本次（用户+AI）一条记录，不累加
       const greeting = `<div class="bubble ai">你想找什么？可以直接说“求一本大一下高数书，最好有笔记，20元以内”。</div>`;
-      const exchange = `<div class="bubble user">${text}</div><div class="bubble ai">已确认：${categoryMap[demand.category] || demand.category} · ${demand.subject} · 预算￥${demand.priceMax}以内。下面是为你匹配到的结果。</div>`;
+      const exchange = `<div class="bubble user">${escapeHTML(text)}</div><div class="bubble ai">已确认：${escapeHTML(categoryMap[demand.category] || demand.category)} · ${escapeHTML(demand.subject)} · 预算￥${Number(demand.priceMax) || 0}以内。下面是为你匹配到的结果。</div>`;
       document.getElementById("buyerChat").innerHTML = greeting + exchange;
       // 设置匹配列表 + 重置到第一页
       buyerDemandList = matchItems(demand);
@@ -3261,7 +3224,7 @@
 
       const tagsEl = document.getElementById("detailTags");
       const tags = Array.isArray(item.tags) ? item.tags : [];
-      tagsEl.innerHTML = tags.map((t) => `<span class="tag">${t}</span>`).join("");
+      tagsEl.innerHTML = tags.map((t) => `<span class="tag">${escapeHTML(t)}</span>`).join("");
 
       document.getElementById("detailSeller").textContent = item.ownerName || item.ownerId || "匿名卖家";
 
@@ -3419,7 +3382,7 @@
       el.innerHTML =
         '<a href="profile.html" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;">' +
         window.AuthModule.avatarHtml(user, 30) +
-        '<span class="u-name">' + (user.nickname || user.studentId) + '</span>' +
+        '<span class="u-name">' + escapeHTML(user.nickname || user.studentId) + '</span>' +
         '</a>' +
         badge +
         '<div class="message-wrap">' +
@@ -3461,7 +3424,7 @@
       if (!ok) return;
       updateUserArea();
       renderAll();
-      initRemoteSync();
+      DM.initSync(renderAll);
     })();
   </script>
 </body>

@@ -878,6 +878,44 @@
       gap: 12px;
     }
 
+    /* ===== 需求风向标：单行横向滑动（箭头 + 拖拽 + 触摸） ===== */
+    .trend-row {
+      display: flex !important;
+      grid-template-columns: none;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    .trend-row::-webkit-scrollbar { display: none; }
+    .trend-row .demand-card {
+      flex: 0 0 300px;
+      scroll-snap-align: start;
+      cursor: grab;
+    }
+    .trend-row .demand-card.dragging { cursor: grabbing; }
+    .trend-arrows { display: flex; gap: 8px; flex: 0 0 auto; }
+    .trend-arrow-btn {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      font-size: 16px;
+      line-height: 1;
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+    }
+    .trend-arrow-btn:not(:disabled):hover { border-color: var(--red); color: var(--red); }
+    .trend-arrow-btn:not(:disabled):active { transform: scale(0.94); }
+    .trend-arrow-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
     .demand-card {
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -1280,6 +1318,7 @@
                 <button id="applyFilters" style="background:var(--red);color:#fff;border:0;border-radius:8px;padding:8px 16px;font-weight:700;cursor:pointer;">筛选</button>
                 <button id="resetFilters" style="border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 16px;cursor:pointer;">重置</button>
               </div>
+              <div id="demandPublishBar" style="display:none;"></div>
               <div class="card-list" id="buyerResults">
                 <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div></div>
                 <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w40"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div></div>
@@ -1419,9 +1458,13 @@
               <h2>需求风向标</h2>
               <p>汇总买家心愿与未匹配需求（不含任何用户信息），卖家可优先发布热门缺货</p>
             </div>
+            <div class="trend-arrows">
+              <button type="button" class="trend-arrow-btn" id="trendPrev" aria-label="向左滑动">‹</button>
+              <button type="button" class="trend-arrow-btn" id="trendNext" aria-label="向右滑动">›</button>
+            </div>
           </div>
           <div class="panel-body">
-            <div class="demand-list" id="sellerUnmatchedDemands"></div>
+            <div class="demand-list trend-row" id="sellerUnmatchedDemands"></div>
           </div>
         </div>
       </section>
@@ -1748,6 +1791,9 @@
       .panel-body { padding: 14px; }
       .hero { padding: 18px 16px; flex-direction: column; align-items: flex-start; gap: 14px; }
       .hero-doodle { display: none; }
+      /* 风向标：移动端用原生触摸滚动，隐藏箭头 */
+      .trend-arrows { display: none; }
+      .trend-row .demand-card { flex: 0 0 260px; }
 
       .two-col { grid-template-columns: 1fr; }
       .result-grid { grid-template-columns: repeat(2, 1fr); }
@@ -2383,6 +2429,31 @@
       });
     }
 
+    // ===== 需求显式发布：操作条常驻结果列表上方（有当前需求且已登录） =====
+    function isDemandPublished(demand) {
+      if (!demand || !demand.id) return false;
+      return (data.demands || []).some((d) => d.id === demand.id);
+    }
+    function renderDemandPublishBar() {
+      const bar = document.getElementById("demandPublishBar");
+      if (!bar) return;
+      const user = window.AuthModule.getCurrentUser();
+      if (!lastDemand || !user) { bar.style.display = "none"; bar.innerHTML = ""; return; }
+      const published = isDemandPublished(lastDemand);
+      bar.style.display = "block";
+      bar.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--cream);border:1px dashed var(--line);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:12px;">
+          <div style="font-size:13px;color:var(--muted);">
+            ${published
+              ? "✓ 这条需求已发布，卖家端「需求风向标」可见。"
+              : `当前需求：${escapeHTML(categoryMap[lastDemand.category] || lastDemand.category)} · ${escapeHTML(lastDemand.subject || "不限科目")} · 预算￥${Number(lastDemand.priceMax) || 0}以内`}
+          </div>
+          ${published
+            ? `<button class="empty-cta" disabled style="opacity:.55;cursor:default;">✓ 已发布</button>`
+            : `<button class="empty-cta" id="publishDemandBtn">发布需求</button>`}
+        </div>`;
+    }
+
     // ===== 搜索功能 =====
     const SEARCH_HISTORY_KEY = "campus_cycle_search_history_v1";
     function getSearchHistory() {
@@ -2503,7 +2574,8 @@
       const el = document.getElementById("buyerResults");
       const cards = pageItems.length
         ? pageItems.map((item) => renderItemCard(item, { allowReport: true })).join("")
-        : `<div class="empty"><div class="empty-deco">🧺</div><div class="empty-title">${keyword ? "没有找到相关物品" : "暂无可推荐物品"}</div><div class="empty-desc">${keyword ? "换个关键词试试，或直接发布一条需求，让 AI 帮你匹配" : "发布一条需求，AI 会把学长学姐的闲置好物推荐给你"}</div></div>`;
+        : `<div class="empty"><div class="empty-deco">🧺</div><div class="empty-title">${keyword ? "没有找到相关物品" : "暂无可推荐物品"}</div><div class="empty-desc">${keyword ? "换个关键词试试，或发布这条需求让卖家看到" : "发布一条需求，AI 会把学长学姐的闲置好物推荐给你"}</div></div>`;
+      renderDemandPublishBar();
       const pager = list.length
         ? `<div class="pager">
              <button class="ghost-btn" data-prev="1" ${buyerPage === 0 ? "disabled" : ""}>上一页</button>
@@ -2571,6 +2643,55 @@
             </article>
           `).join("")
         : `<div class="empty" style="grid-column:1 / -1;">当前没有未满足的需求。卖家可继续发布毕业闲置，或等待买家心愿累积。</div>`;
+      bindTrendRow(el);
+    }
+
+    // ===== 风向标横滑交互：箭头步进 + 两端禁用联动 + 鼠标拖拽 =====
+    function bindTrendRow(el) {
+      const prev = document.getElementById("trendPrev");
+      const next = document.getElementById("trendNext");
+      if (!prev || !next) return;
+      const step = 320;
+
+      const syncArrowState = () => {
+        prev.disabled = el.scrollLeft <= 2;
+        next.disabled = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
+      };
+      prev.onclick = () => el.scrollBy({ left: -step });
+      next.onclick = () => el.scrollBy({ left: step });
+      el.onscroll = syncArrowState;
+      syncArrowState();
+
+      // 鼠标拖拽：pointer 事件改 scrollLeft；位移超阈值时抑制卡片按钮误触
+      let dragging = false;
+      let moved = false;
+      let startX = 0;
+      let startScroll = 0;
+      el.onpointerdown = (e) => {
+        if (e.pointerType !== "mouse") return; // 触摸走原生滚动
+        dragging = true;
+        moved = false;
+        startX = e.clientX;
+        startScroll = el.scrollLeft;
+        el.classList.add("dragging");
+      };
+      el.onpointermove = (e) => {
+        if (!dragging) return;
+        const dx = e.clientX - startX;
+        if (Math.abs(dx) > 5) moved = true;
+        el.scrollLeft = startScroll - dx;
+      };
+      const endDrag = () => {
+        if (!dragging) return;
+        dragging = false;
+        el.classList.remove("dragging");
+      };
+      el.onpointerup = endDrag;
+      el.onpointerleave = endDrag;
+      // 拖拽产生的点击（落在卡片按钮上）捕获抑制
+      el.onclick = (e) => {
+        if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; }
+      };
     }
 
     function buildAidContribution(need, item) {
@@ -2822,8 +2943,7 @@
       document.getElementById("buyerParseStatus").textContent = parseError
         ? `${parseMode}：${parseError}`
         : `${parseMode}完成：${categoryMap[demand.category] || demand.category} · ${demand.subject} · 预算￥${demand.priceMax}以内。`;
-      data.demands.unshift(demand);
-      saveData(data);
+      // 需求不再自动发布：保留在内存（lastDemand），买家点「发布需求」才写入 data.demands 进卖家风向标
       // 对话只保留：引导语 + 本次（用户+AI）一条记录，不累加
       const greeting = `<div class="bubble ai">你想找什么？可以直接说“求一本大一下高数书，最好有笔记，20元以内”。</div>`;
       const exchange = `<div class="bubble user">${escapeHTML(text)}</div><div class="bubble ai">已确认：${escapeHTML(categoryMap[demand.category] || demand.category)} · ${escapeHTML(demand.subject)} · 预算￥${Number(demand.priceMax) || 0}以内。下面是为你匹配到的结果。</div>`;
@@ -3435,6 +3555,21 @@
           renderBuyerResults();
         } else if (addToWishlist(item)) {
           renderBuyerResults();
+        }
+        return;
+      }
+
+      // 显式发布当前需求到卖家端风向标
+      if (event.target.id === "publishDemandBtn") {
+        if (!lastDemand || isDemandPublished(lastDemand)) return;
+        data.demands = data.demands || [];
+        data.demands.unshift(lastDemand);
+        saveData(data);
+        renderDemandPublishBar();
+        if (window.Utils && window.Utils.showToast) {
+          window.Utils.showToast("已发布，卖家端「需求风向标」可见", "success");
+        } else {
+          alert("已发布，卖家端「需求风向标」可见。");
         }
         return;
       }

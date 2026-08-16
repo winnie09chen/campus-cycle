@@ -70,7 +70,8 @@
     notifications: [],
     currentDraft: null,
     reviews: [],
-    auditLogs: []
+    auditLogs: [],
+    wishlist: []
   };
 
   /** 类别映射 */
@@ -107,7 +108,8 @@
       notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [],
       currentDraft: parsed.currentDraft || null,
       reviews: Array.isArray(parsed.reviews) ? parsed.reviews : [],
-      auditLogs: Array.isArray(parsed.auditLogs) ? parsed.auditLogs : []
+      auditLogs: Array.isArray(parsed.auditLogs) ? parsed.auditLogs : [],
+      wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist : []
     };
   };
 
@@ -123,7 +125,8 @@
       notifications: Array.isArray(value.notifications) ? value.notifications : [],
       currentDraft: value.currentDraft || null,
       reviews: Array.isArray(value.reviews) ? value.reviews : [],
-      auditLogs: Array.isArray(value.auditLogs) ? value.auditLogs : []
+      auditLogs: Array.isArray(value.auditLogs) ? value.auditLogs : [],
+      wishlist: Array.isArray(value.wishlist) ? value.wishlist : []
     };
   };
 

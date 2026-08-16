@@ -102,6 +102,12 @@
       <div class="msg" id="nickMsg"></div>
     </section>
 
+    <section class="section" id="wishSection" style="display:none;">
+      <h3>我的心愿单</h3>
+      <p style="margin:0 0 12px;font-size:13px;color:var(--muted);">记录你想找的物品，卖家端会聚合成「需求风向标」（不展示你的任何信息）；相关物品上架并过审后会通过站内消息提醒你。</p>
+      <div id="wishList"></div>
+    </section>
+
     <section class="section" id="pwdSection" style="display:none;">
       <h3>修改密码</h3>
       <div class="field">
@@ -124,6 +130,8 @@
   </div>
 
   <script src="./config.js"></script>
+  <script src="./utils.js"></script>
+  <script src="./data-module.js"></script>
   <script src="./auth-module.js"></script>
   <script>
     (function () {
@@ -153,22 +161,69 @@
       function render() {
         const user = Auth.getCurrentUser();
         if (!user) { Auth.gotoLogin(); return; }
+        const U = window.Utils;
+        const esc = U && U.escapeHTML ? U.escapeHTML : String;
         const av = user.avatar || { letter: "?", color: "#c8192e" };
+        const avColor = /^#[0-9a-fA-F]{3,8}$/.test(av.color || "") ? av.color : "#c8192e";
         document.getElementById("profileCard").innerHTML =
-          '<div class="avatar" style="background:' + av.color + ';">' + (av.letter || "?") + '</div>' +
+          '<div class="avatar" style="background:' + avColor + ';">' + esc(av.letter || "?") + '</div>' +
           '<div>' +
-            '<div class="pc-name">' + (user.nickname || user.studentId) + '</div>' +
-            '<div class="pc-sub">学号 ' + user.studentId + ' · ' + (user.email || "无邮箱") + '</div>' +
+            '<div class="pc-name">' + esc(user.nickname || user.studentId) + '</div>' +
+            '<div class="pc-sub">学号 ' + esc(user.studentId) + ' · ' + esc(user.email || "无邮箱") + '</div>' +
             '<div class="pc-tags"><span class="tag role">' + roleText(user.role) + '</span>' + statusTag(user.status) + '</div>' +
           '</div>';
         document.getElementById("nickInput").value = user.nickname || user.studentId;
         document.getElementById("backBtn").href = backUrl(user.role);
         document.getElementById("loading").style.display = "none";
         document.getElementById("profileCard").style.display = "flex";
+        // 心愿单仅学生角色展示
+        if (user.role === Auth.ROLES.student) {
+          document.getElementById("wishSection").style.display = "block";
+          renderWishlist();
+        }
         document.getElementById("nickSection").style.display = "block";
         document.getElementById("pwdSection").style.display = "block";
         document.getElementById("logoutBtn").style.display = "block";
       }
+
+      // ===== 我的心愿单（仅学生） =====
+      function categoryLabelOf(entry) {
+        const map = (window.DataModule && window.DataModule.categoryMap) || {};
+        return entry.customCategory || map[entry.category] || entry.category || "其他";
+      }
+      function renderWishlist() {
+        const el = document.getElementById("wishList");
+        if (!el || !window.DataModule) return;
+        const user = Auth.getCurrentUser();
+        if (!user) return;
+        const data = window.DataModule.loadData();
+        const list = (data.wishlist || []).filter((w) => w.ownerId === user.studentId);
+        const U = window.Utils;
+        const esc = U && U.escapeHTML ? U.escapeHTML : String;
+        el.innerHTML = list.length
+          ? list.map((w) => `
+              <div class="wish-item" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);">
+                <div>
+                  <div style="font-weight:700;font-size:14px;">${esc(categoryLabelOf(w))} · ${esc(w.subject || "不限科目")}</div>
+                  <div style="font-size:12px;color:var(--muted);">${Number(w.priceMax) || 0 ? "预算￥" + (Number(w.priceMax) || 0) + "以内 · " : ""}加入于 ${esc(w.createdAt || "")}</div>
+                </div>
+                <button class="btn" data-rm-wish="${esc(w.id)}" style="flex:0 0 auto;">删除</button>
+              </div>
+            `).join("")
+          : '<div style="color:var(--muted);font-size:13px;padding:8px 0;">还没有心愿。去「我要买」检索结果里点「☆ 加入心愿单」吧。</div>';
+      }
+      document.getElementById("wishList").addEventListener("click", (e) => {
+        const wishId = e.target.dataset && e.target.dataset.rmWish;
+        if (!wishId || !window.DataModule) return;
+        const data = window.DataModule.loadData();
+        data.wishlist = (data.wishlist || []).filter((w) => w.id !== wishId);
+        window.DataModule.saveData(data);
+        renderWishlist();
+      });
+      // 跨页联动：主站操作心愿单后这里自动刷新
+      window.addEventListener("storage", (e) => {
+        if (e.key === (window.DataModule && window.DataModule.getStorageKey())) renderWishlist();
+      });
 
       (async function init() {
         const user = await Auth.restore();

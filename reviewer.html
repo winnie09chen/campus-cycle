@@ -244,7 +244,33 @@
 
     /* ===== 移动端适配（<=600px） ===== */
     @media (max-width: 600px) {
-      .topbar {
+    /* ===== 首屏鉴权遮罩（boot-gate：鉴权完成前隐藏内容） ===== */
+    body.boot-gate > *:not(.boot-veil) { visibility: hidden; }
+    .boot-veil {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--bg, #faf8f4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted, #68707d);
+      font-size: 14px;
+    }
+    .boot-veil::before {
+      content: "";
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(200, 25, 46, 0.18);
+      border-top-color: #c8192e;
+      border-radius: 50%;
+      animation: bootspin .7s linear infinite;
+    }
+    @keyframes bootspin { to { transform: rotate(360deg); } }
+
+    .topbar {
         height: auto;
         flex-wrap: wrap;
         padding: 10px 14px;
@@ -353,6 +379,20 @@
   </style>
 </head>
 <body>
+  <!-- 鉴权快路径：无 token 同步跳登录，避免先渲染主界面再跳转的闪现 -->
+  <script>
+    (function () {
+      try {
+        var s = JSON.parse(localStorage.getItem("campus_cycle_session_v1"));
+        if (!s || !s.token) {
+          location.replace("login.html");
+          throw "redirect";
+        }
+      } catch (e) { if (e !== "redirect") location.replace("login.html"); }
+      document.body.classList.add("boot-gate");
+    })();
+  </script>
+  <div class="boot-veil" aria-hidden="true">正在进入工作台…</div>
   <header class="topbar">
     <div class="brand">
       <div class="brand-mark">审</div>
@@ -807,6 +847,28 @@
     // 远程同步已下沉至 data-module.js（DM.initSync(renderAll)），模块状态为唯一真相源
 
     // ===== 审核动作 =====
+    // 心愿匹配判断：类别相同 + 科目双向包含 + 非卖家本人（与 index 端规则一致）
+    function wishMatchesItem(wish, item) {
+      if (!wish || !item) return false;
+      if (wish.ownerId === item.ownerId) return false;
+      if (wish.category !== item.category) return false;
+      const ws = (wish.subject || "").trim();
+      const isb = (item.subject || "").trim();
+      if (!ws || !isb) return true;
+      return ws.includes(isb) || isb.includes(ws);
+    }
+
+    // 物品审核通过后：通知心愿匹配的买家（通过被审核物品 ownerName 只通知买家本人，不暴露他人）
+    function notifyWishlistMatches(item) {
+      const wishlist = Array.isArray(data.wishlist) ? data.wishlist : [];
+      wishlist.forEach((w) => {
+        if (!wishMatchesItem(w, item)) return;
+        addNotification(w.ownerId, "info", "心愿单上新",
+          `你想要的「${getCategoryLabel(item)} · ${item.subject || "不限"}」有新物品《${item.title || "物品"}》￥${Number(item.price) || 0}，快去看看吧。`,
+          { itemId: item.id });
+      });
+    }
+
     function approve(id) {
       const it = data.items.find((x) => x.id === id);
       if (!it) return;
@@ -819,6 +881,7 @@
         `你的「${it.title || it.subject || "物品"}」已审核通过，买家现在可以看到并购买。`,
         { itemId: it.id }
       );
+      notifyWishlistMatches(it);
       saveData();
     }
 
@@ -902,6 +965,7 @@
         `你的「${it.title || it.subject || "物品"}」已由审核员修正后通过，买家现在可以看到并购买。`,
         { itemId: it.id }
       );
+      notifyWishlistMatches(it);
       editingId = null;
       document.getElementById("editModal").classList.remove("active");
       saveData();
@@ -1137,6 +1201,7 @@
         if (selectedItems.has(item.id)) {
           item.status = 'approved';
           addNotification(item.ownerId, 'success', '物品审核通过', '你的物品「' + (item.title || item.subject) + '」已通过审核，已上架。');
+          notifyWishlistMatches(item);
         }
       });
 
@@ -1256,14 +1321,20 @@
     }
 
     // ===== 鉴权门禁：仅审核员可进入工作台；未登录/角色不符 → 跳登录页 =====
+    function liftBootGate() {
+      document.body.classList.remove("boot-gate");
+      const veil = document.querySelector(".boot-veil");
+      if (veil) veil.remove();
+    }
     (async function () {
       const ok = await window.AuthModule.requireRole(window.AuthModule.ROLES.reviewer);
-      if (!ok) return;
+      if (!ok) return; // 即将跳登录页，保持遮罩避免闪现
       updateUserArea();
       renderAll();
       DM.initSync(renderAll);
       renderUsers();
       setInterval(renderUsers, REMOTE_SYNC_MS); // 定期刷新用户审核列表
+      liftBootGate();
     })();
   </script>
 </body>

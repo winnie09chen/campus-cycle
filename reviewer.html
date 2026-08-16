@@ -831,7 +831,12 @@
       }
     }
 
+    // 渲染防护：数据串未变时跳过全量重渲染（storage 事件与远程同步回调短时双触发时避免 6 个 tab 齐闪）
+    var renderAllSnapshot = "";
     function renderAll() {
+      const nextSnapshot = localStorage.getItem(STORAGE_KEY) || "";
+      if (nextSnapshot === renderAllSnapshot) return;
+      renderAllSnapshot = nextSnapshot;
       data = loadData();
       renderStats();
       renderPending();
@@ -982,21 +987,30 @@
       return `<span class="tag ${cls}">${userStatusText(u)}</span>`;
     }
 
+    // 渲染防护：请求代次序号（丢弃乱序旧响应）+ 渲染 diff（数据未变不重建 DOM，避免 3s 轮询跳动）
+    var renderUsersSeq = 0;
+    var renderUsersSnapshot = "";
     async function renderUsers() {
       const filter = document.getElementById("userStatusFilter").value;
       const list = document.getElementById("usersList");
+      const seq = ++renderUsersSeq;
       let all = [];
       try {
         const body = await window.AuthModule.listUsers(null);
         all = body.users || [];
       } catch (e) {
+        if (seq !== renderUsersSeq) return; // 已有更新的请求在途，丢弃本次
+        renderUsersSnapshot = ""; // 错误态不缓存，下次重试渲染
         list.innerHTML = `<div class="empty">用户列表加载失败：${escapeHTML(e.message)}</div>`;
         return;
       }
+      if (seq !== renderUsersSeq) return; // 旧响应后到：丢弃，防止已审核用户"复活"回跳
       document.getElementById("statPendingUsers").textContent =
         all.filter((u) => u.status === "pending").length;
       usersList = filter === "all" ? all : all.filter((u) => u.status === filter);
-
+      const nextSnapshot = JSON.stringify(usersList);
+      if (nextSnapshot === renderUsersSnapshot) return; // 数据未变：跳过 innerHTML 重建
+      renderUsersSnapshot = nextSnapshot;
       list.innerHTML = usersList.length
         ? usersList.map((u) => `
             <article class="review-card">

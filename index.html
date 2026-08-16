@@ -2770,7 +2770,12 @@
       `;
     }
 
+    // 渲染防护：数据串未变时跳过全量重渲染（storage 事件与远程同步回调短时双触发时避免 6 个 tab 齐闪）
+    var renderAllSnapshot = "";
     function renderAll() {
+      const nextSnapshot = localStorage.getItem(STORAGE_KEY) || "";
+      if (nextSnapshot === renderAllSnapshot) return;
+      renderAllSnapshot = nextSnapshot;
       data = loadData();
       // 若买家有过一次需求，刷新时用最近需求重跑匹配（让新审核通过的物品进入推荐）
       buyerDemandList = lastDemand ? matchItems(lastDemand) : null;
@@ -3671,14 +3676,20 @@
     });
 
     // ===== 顶栏用户区渲染（头像 + 昵称 + 待认证徽章 + 退出） =====
+    // 渲染防护：签名相同跳过重建；确需重建时保留消息面板开合状态（避免 renderAll 轮询把面板顶掉）
+    var userAreaSnapshot = "";
     function updateUserArea() {
       const user = window.AuthModule.getCurrentUser();
       const el = document.getElementById("userArea");
       if (!el) return;
-      if (!user) { el.innerHTML = ""; return; }
+      if (!user) { el.innerHTML = ""; userAreaSnapshot = ""; return; }
       const badge = (user.role === "student" && user.status !== "verified")
         ? '<span class="u-badge">认证中</span>' : "";
       const unread = unreadMessageCount();
+      const nextSnapshot = [user.studentId, user.nickname, user.status, user.avatar && user.avatar.color, user.avatar && user.avatar.letter, unread].join("|");
+      const panelWasOpen = !!(document.getElementById("messagePanel") && document.getElementById("messagePanel").classList.contains("show"));
+      if (nextSnapshot === userAreaSnapshot) return; // 数据未变：不重建，消息面板/按钮状态原样保留
+      userAreaSnapshot = nextSnapshot;
       el.innerHTML =
         '<a href="profile.html" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;">' +
         window.AuthModule.avatarHtml(user, 30) +
@@ -3689,7 +3700,7 @@
           '<button class="message-btn" id="messageBtn" aria-label="站内消息">消息' +
             (unread ? '<span class="message-dot">' + unread + '</span>' : '') +
           '</button>' +
-          '<div class="message-panel" id="messagePanel">' +
+          '<div class="message-panel' + (panelWasOpen ? ' show' : '') + '" id="messagePanel">' +
             '<div class="message-head"><span>站内消息</span><button type="button" id="messageReadAll">全部已读</button></div>' +
             '<div class="message-list">' + renderMessagePanel() + '</div>' +
           '</div>' +

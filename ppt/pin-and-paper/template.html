@@ -1,0 +1,1316 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>物候 Campus Cycle · AI 应用开发课程结课答辩</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Long+Cang&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --paper:    #EFE56A;
+  --paper-2:  #F5ECA0;
+  --paper-3:  #E8D85A;
+  --cream:    #F8F1D6;
+  --kraft:    #C9A66B;
+  --ink:      #1F3A8A;
+  --ink-soft: #2D4FB8;
+  --ink-line: #3457C4;
+  --black:    #0E1430;
+  --red:      #C2342B;
+  --olive:    #6B7A2E;
+  --orange:   #D8702A;
+
+  /* typography tokens */
+  --font-display:  "Space Grotesk", "Long Cang", sans-serif;
+  --font-scribble: "Caveat", "Long Cang", cursive;
+  --font-reg:      "Space Grotesk", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono:     "DM Mono", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", monospace;
+}
+
+html, body { margin:0; padding:0; background:#1a1a1a; }
+body { font-family: var(--font-reg); color: var(--ink); }
+deck-stage { background: #1a1a1a; }
+
+section.slide {
+  background:
+    radial-gradient(120% 90% at 20% 10%, rgba(255,255,255,.18), transparent 60%),
+    radial-gradient(140% 100% at 80% 95%, rgba(0,0,0,.05), transparent 55%),
+    var(--paper);
+  color: var(--ink);
+  overflow: hidden;
+  position: relative;
+}
+section.slide.cream { background:
+    radial-gradient(120% 90% at 20% 10%, rgba(255,255,255,.5), transparent 60%),
+    var(--cream); }
+section.slide.deep  { background:
+    radial-gradient(120% 90% at 30% 10%, rgba(255,255,255,.18), transparent 60%),
+    var(--paper-3); }
+
+/* paper grain */
+section.slide::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  opacity: .35;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.45  0 0 0 0 0.2  0 0 0 .25 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* chrome */
+.top {
+  position: absolute; top: 44px; left: 64px; right: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--font-mono);
+  font-weight: 500; font-size: 20px;
+  letter-spacing: .12em; text-transform: uppercase; line-height: 1;
+}
+.top .lockup { display: flex; align-items: center; gap: 14px; }
+.top .lockup svg { width: 32px; height: 16px; }
+.top .meta { display: flex; gap: 36px; opacity: .7; }
+
+.footer {
+  position: absolute; left: 64px; right: 64px; bottom: 36px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-mono);
+  font-weight: 500; font-size: 18px;
+  letter-spacing: .14em; text-transform: uppercase;
+  opacity: .65;
+}
+
+.scribble {
+  font-family: var(--font-scribble);
+  color: var(--ink);
+  line-height: 1.05;
+}
+
+/* ============ 01 COVER ============ */
+.s-cover { padding: 0; }
+.s-cover .stage {
+  position: absolute; inset: 0;
+  padding: 110px 64px 80px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 24px;
+  z-index: 2;
+}
+/* group + school line */
+.s-cover .super {
+  font-family: var(--font-reg);
+  font-weight: 700;
+  font-size: 44px; letter-spacing: .06em; text-transform: none;
+  opacity: .95;
+}
+.s-cover h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 150px;
+  line-height: 1.08;
+  letter-spacing: -.04em;
+  color: var(--ink);
+  margin: 0;
+  align-self: center;
+  max-width: 14ch;
+}
+.s-cover .pin-1 {
+  position: absolute; top: 130px; right: 80px;
+  width: 420px; transform: rotate(-8deg);
+  color: var(--ink); z-index: 1;
+}
+.s-cover .pin-2 {
+  position: absolute; bottom: 200px; right: 140px;
+  width: 360px; transform: rotate(14deg);
+  color: var(--ink); z-index: 1;
+}
+.s-cover .handwritten {
+  position: absolute;
+  right: 80px; bottom: 360px;
+  font-family: var(--font-scribble);
+  font-size: 38px;
+  line-height: 1.1;
+  color: var(--ink);
+  transform: rotate(-3deg);
+  transform-origin: right bottom;
+  text-align: right;
+  z-index: 3;
+}
+.s-cover .handwritten .underline {
+  border-bottom: 2px solid var(--ink);
+}
+.s-cover .row {
+  display: flex; align-items: end; justify-content: space-between;
+  gap: 32px;
+}
+.s-cover .row .who {
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 52px; letter-spacing: .08em; text-transform: none;
+}
+.s-cover .row .who .underline-thin { border-bottom: 4px solid var(--ink); padding-bottom: 8px; }
+.s-cover .row .who small {
+  display: block; opacity: .8; margin-top: 14px; letter-spacing: .06em; font-size: 24px;
+}
+
+/* ============ 02 AGENDA HEAD (restored) ============ */
+.s-agenda h2 {
+  position: absolute; left: 64px; top: 110px;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 88px; line-height: 1.05; margin: 0; color: var(--ink);
+}
+
+/* ============ TOC LIST (native agenda row grammar) ============ */
+.s-toc h2 {
+  position: absolute; left: 64px; top: 110px;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 88px; line-height: 1.05; margin: 0; color: var(--ink);
+}
+.s-toc .list {
+  position: absolute; left: 64px; right: 64px; top: 300px; bottom: 90px;
+  display: flex; flex-direction: column;
+}
+.s-toc .trow {
+  display: grid;
+  grid-template-columns: 90px 1fr 140px 220px;
+  align-items: center;
+  gap: 32px;
+  padding: 20px 0;
+  border-bottom: 1.5px dashed rgba(31,58,138,.45);
+}
+.s-toc .trow:last-child { border-bottom: 0; }
+.s-toc .trow .num {
+  font-family: var(--font-mono); font-weight: 500;
+  font-size: 26px; letter-spacing: .14em;
+}
+.s-toc .trow .lab {
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 34px; letter-spacing: -.01em; line-height: 1.1;
+}
+.s-toc .trow .pin {
+  width: 120px; height: 28px; color: var(--ink);
+  transform: rotate(-3deg);
+}
+.s-toc .trow .meta {
+  font-family: var(--font-mono); font-weight: 500;
+  font-size: 20px; letter-spacing: .14em; text-transform: uppercase;
+  opacity: .7; text-align: right;
+}
+
+/* ============ DEMO PAGE (link + QR) ============ */
+.s-demo { padding: 0; }
+.s-demo .stage {
+  position: absolute; inset: 0;
+  padding: 110px 64px 90px;
+  display: grid; grid-template-columns: 1.15fr .85fr; gap: 60px;
+  align-items: center;
+}
+.s-demo .left { display: flex; flex-direction: column; gap: 36px; }
+.s-demo h2 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 110px; line-height: 1.05; margin: 0;
+}
+.s-demo .url {
+  display: inline-flex; align-items: center; gap: 16px;
+  font-family: var(--font-mono); font-weight: 500;
+  font-size: 40px; letter-spacing: .04em;
+  border: 2.5px solid var(--ink); border-radius: 999px;
+  padding: 18px 40px;
+  width: fit-content;
+  box-shadow: 5px 6px 0 0 var(--ink);
+  background: var(--cream);
+}
+.s-demo p { font-size: 26px; line-height: 1.6; max-width: 34ch; opacity: .9; margin: 0; }
+.s-demo .qr {
+  background: var(--cream);
+  border: 1.5px solid var(--ink); border-radius: 4px;
+  box-shadow: 6px 7px 0 0 var(--ink);
+  padding: 40px;
+  display: flex; flex-direction: column; align-items: center; gap: 22px;
+  position: relative;
+  justify-self: center;
+}
+.s-demo .qr img { width: 400px; height: 400px; display: block; }
+.s-demo .qr .cap {
+  font-family: var(--font-scribble); font-weight: 600;
+  font-size: 40px; line-height: 1;
+  transform: rotate(-2deg);
+}
+.s-demo .qr .pin {
+  position: absolute; top: -18px; left: 50%; transform: translateX(-50%) rotate(-8deg);
+  width: 130px; height: 36px; color: var(--ink);
+}
+
+/* ============ SHOTS PAGE (2x2 screenshots) ============ */
+.s-shots .head {
+  position: absolute; left: 64px; right: 64px; top: 100px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 40px;
+}
+.s-shots .head h2 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 80px; line-height: 1.05; margin: 0;
+}
+.s-shots .head .sub {
+  font-size: 22px; line-height: 1.5; max-width: 40ch; opacity: .85; margin-top: 12px;
+}
+.s-shots .grid {
+  position: absolute; left: 64px; right: 64px; top: 300px; bottom: 90px;
+  display: grid; grid-template-columns: repeat(2, 462px); grid-template-rows: repeat(2, 1fr);
+  justify-content: center;
+  gap: 26px 30px;
+}
+.s-shots .shot:nth-child(1),
+.s-shots .shot:nth-child(2) { transform: translateX(-419px); }
+.s-shots .shot:nth-child(3),
+.s-shots .shot:nth-child(4) { transform: translateX(419px); }
+.s-shots .shot {
+  background: var(--cream);
+  border: 1.5px solid var(--ink); border-radius: 4px;
+  box-shadow: 5px 6px 0 0 var(--ink);
+  padding: 18px 20px 14px;
+  display: flex; flex-direction: column; gap: 12px;
+  position: relative;
+}
+.s-shots .shot.alt { background: var(--paper-2); }
+.s-shots .shot.alt2 { background: #FBE6A4; }
+.s-shots .shot .pin {
+  position: absolute; top: -14px; left: 26px;
+  width: 100px; height: 28px; color: var(--ink); transform: rotate(-7deg);
+}
+.s-shots .shot img {
+  width: 100%; flex: 1; min-height: 0; display: block;
+  object-fit: contain; object-position: center;
+  border: 1.5px solid var(--ink); border-radius: 3px;
+  background: #fff;
+}
+.s-shots .shot .cap { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.s-shots .shot .cap h4 {
+  font-family: var(--font-reg); font-weight: 700; font-size: 26px; margin: 0; white-space: nowrap;
+}
+.s-shots .shot .cap p { font-size: 20px; line-height: 1.35; margin: 0; opacity: .85; }
+
+/* ============ NOTICE HEAD SPLIT (matrix-style big title) ============ */
+.s-notice .head.split {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 40px;
+}
+.s-notice .head.split h2 {
+  font-size: 88px; line-height: 1.05; letter-spacing: -.03em;
+}
+.s-notice .head.split .sub {
+  font-size: 23px; line-height: 1.5; max-width: 36ch; opacity: .85; margin-top: 12px;
+  text-align: left;
+}
+.s-notice .head.split + .grid { top: 340px; }
+
+/* ============ 02 PAIN CARDS (2x2, notecard grammar) ============ */
+.s-agenda .grid {
+  position: absolute; left: 64px; right: 64px; top: 340px; bottom: 100px;
+  display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr);
+  gap: 36px 32px;
+}
+.s-agenda .card {
+  background: var(--cream);
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  padding: 40px 36px 30px;
+  display: flex; flex-direction: column;
+  position: relative;
+  box-shadow: 5px 6px 0 0 var(--ink);
+}
+.s-agenda .card.alt  { background: var(--paper-2); }
+.s-agenda .card.alt2 { background: #FBE6A4; transform: rotate(.4deg); }
+.s-agenda .card .pin {
+  position: absolute; top: -16px; left: 30px;
+  width: 110px; height: 32px;
+  color: var(--ink);
+  transform: rotate(-10deg);
+}
+.s-agenda .card .num {
+  font-family: var(--font-mono); font-weight: 500;
+  font-size: 18px; letter-spacing: .2em; text-transform: uppercase;
+  opacity: .65; margin-top: 8px;
+}
+.s-agenda .card h3 {
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 34px; line-height: 1.15; letter-spacing: -.01em;
+  margin: 10px 0 12px;
+}
+.s-agenda .card p { font-size: 24px; line-height: 1.55; margin: 0; }
+.s-agenda .card .scribble {
+  margin-top: auto; padding-top: 14px;
+  font-family: var(--font-scribble);
+  font-size: 34px; line-height: 1.05; color: var(--ink);
+  transform: rotate(-1.5deg);
+  transform-origin: left;
+}
+.s-agenda .card .scribble .underline { border-bottom: 2px solid var(--ink); }
+
+/* ============ 03 NOTECARDS ============ */
+.s-notes .head { position: absolute; left: 64px; right: 64px; top: 110px; }
+.s-notes h2 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 84px; line-height: 1.05; letter-spacing: -.03em; margin: 0;
+}
+.s-notes .sub {
+  margin-top: 14px;
+  font-size: 26px; line-height: 1.45; max-width: 60ch; opacity: .85;
+}
+.s-notes .grid {
+  position: absolute; left: 64px; right: 64px; top: 430px; bottom: 100px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+}
+.s-notes .card {
+  background: var(--cream);
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  padding: 36px 28px 28px;
+  display: flex; flex-direction: column;
+  position: relative;
+  box-shadow: 5px 6px 0 0 var(--ink);
+}
+.s-notes .card.alt  { background: var(--paper-2); }
+.s-notes .card.alt2 { background: #FBE6A4; transform: rotate(.6deg); }
+.s-notes .card .pin {
+  position: absolute; top: -16px; left: 28px;
+  width: 110px; height: 32px;
+  color: var(--ink);
+  transform: rotate(-10deg);
+}
+.s-notes .card .num {
+  font-family: var(--font-mono); font-weight: 500;
+  font-size: 18px; letter-spacing: .2em; text-transform: uppercase;
+  opacity: .65; margin-top: 8px;
+}
+.s-notes .card h3 {
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 38px; line-height: 1.02; letter-spacing: -.02em;
+  margin: 14px 0 16px;
+}
+.s-notes .card p { font-size: 24px; line-height: 1.45; margin: 0; }
+.s-notes .card .scribble {
+  margin-top: auto; padding-top: 18px;
+  font-size: 32px; line-height: 1.05;
+  transform: rotate(-1.5deg);
+  transform-origin: left;
+}
+.s-notes .card .scribble .underline { border-bottom: 2px solid var(--ink); }
+
+/* ============ 05 NOTICE (text-dense) ============ */
+.s-notice .head {
+  position: absolute; left: 64px; right: 64px; top: 110px;
+  display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: start;
+}
+.s-notice .head h2 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 50px; line-height: 1.05; letter-spacing: -.02em; margin: 0;
+}
+.s-notice .grid {
+  position: absolute; left: 64px; right: 64px; top: 320px; bottom: 90px;
+  display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 28px;
+}
+.s-notice .col {
+  background: var(--cream);
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  padding: 28px 28px 24px;
+  display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 4px 5px 0 0 var(--ink);
+}
+.s-notice .col.b { background: var(--paper-2); }
+.s-notice .col h3 {
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 32px; letter-spacing: -.01em;
+  border-bottom: 1.5px solid var(--ink); padding-bottom: 12px; margin: 0;
+}
+.s-notice .col .meta {
+  font-family: var(--font-scribble); font-weight: 600;
+  font-size: 38px; line-height: 1.05;
+}
+.s-notice .col p { font-size: 24px; line-height: 1.5; margin: 0; }
+.s-notice .col ul { margin: 0; padding-left: 20px; font-size: 23px; line-height: 1.45; }
+.s-notice .col ul li { margin-bottom: 8px; }
+
+/* ============ 07 PROCESS (5 pinned cards) ============ */
+.s-process .head {
+  position: absolute; left: 64px; right: 64px; top: 110px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 40px;
+}
+.s-process .head h2 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 88px; line-height: 1.05; letter-spacing: -.035em; margin: 0;
+}
+.s-process .head .sub {
+  font-family: var(--font-reg);
+  font-size: 23px; line-height: 1.5; max-width: 36ch; opacity: .85; margin-top: 12px;
+}
+.s-process .flow {
+  position: absolute; left: 64px; right: 64px; top: 460px; bottom: 270px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 22px;
+}
+.s-process .node {
+  background: var(--cream);
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  padding: 32px 22px 22px;
+  display: flex; flex-direction: column; gap: 8px; position: relative;
+  box-shadow: 4px 5px 0 0 var(--ink);
+}
+.s-process .node.alt  { background: var(--paper-2); }
+.s-process .node.alt2 { background: #FBE6A4; }
+.s-process .node .pin {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%) rotate(-6deg);
+  width: 96px; height: 28px; color: var(--ink);
+}
+.s-process .node .n {
+  font-family: var(--font-scribble); font-weight: 700;
+  font-size: 70px; line-height: .9; color: var(--ink);
+}
+.s-process .node h3 {
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 30px; line-height: 1.05; letter-spacing: -.015em; margin: 0;
+}
+.s-process .node p { font-size: 24px; line-height: 1.4; margin: 0; }
+.s-process .node .arr {
+  position: absolute; right: -16px; top: 44%;
+  width: 28px; height: 28px; z-index: 2; color: var(--ink);
+}
+.s-process .node:last-child .arr { display: none; }
+
+/* ============ 08 LEDGER (comparison) ============ */
+.s-matrix .head {
+  position: absolute; left: 64px; right: 64px; top: 110px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 40px;
+}
+.s-matrix .head h2 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 88px; line-height: 1.05; letter-spacing: -.035em; margin: 0;
+}
+.s-matrix .head .sub {
+  font-size: 23px; line-height: 1.5; max-width: 36ch; opacity: .85; margin-top: 12px;
+}
+.s-matrix .table {
+  position: absolute; left: 64px; right: 64px; top: 460px; bottom: 110px;
+  background: var(--cream);
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  grid-auto-rows: 1fr; overflow: hidden;
+  box-shadow: 5px 6px 0 0 var(--ink);
+}
+.s-matrix .cell {
+  padding: 18px 22px; display: flex; align-items: center;
+  font-size: 24px; line-height: 1.35;
+  border-bottom: 1.5px solid rgba(31,58,138,.5);
+  border-right: 1.5px solid rgba(31,58,138,.5);
+}
+.s-matrix .cell:nth-child(4n) { border-right: 0; }
+.s-matrix .cell.last { border-bottom: 0; }
+.s-matrix .cell.head-row {
+  background: var(--ink); color: var(--paper);
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 26px; letter-spacing: -.005em;
+  border-right-color: rgba(239,229,106,.3);
+}
+.s-matrix .cell.row-label {
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 28px; letter-spacing: -.01em;
+}
+.s-matrix .pill {
+  display: inline-block;
+  font-family: var(--font-scribble); font-weight: 600;
+  font-size: 32px; line-height: 1;
+  padding: 4px 14px; border-radius: 999px;
+  border: 1.5px solid var(--ink);
+}
+.s-matrix .pill.yes  { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.s-matrix .pill.part { background: var(--paper-2); color: var(--ink); }
+.s-matrix .pill.no   {
+  background: transparent; color: var(--red); border-color: var(--red);
+  font-family: var(--font-mono); font-weight: 500; font-size: 16px;
+  letter-spacing: .14em; text-transform: uppercase;
+}
+.s-matrix .pill.note { background: transparent; }
+
+/* ============ 09 STATS ============ */
+.s-stats .head {
+  position: absolute; left: 64px; right: 64px; top: 110px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 40px;
+}
+.s-stats .head h2 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 92px; line-height: 1.05; letter-spacing: -.035em; margin: 0;
+}
+.s-stats .head .sub {
+  font-size: 23px; line-height: 1.5; max-width: 36ch; opacity: .85; margin-top: 12px;
+}
+.s-stats .grid {
+  position: absolute; left: 64px; right: 64px; top: 460px; bottom: 110px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
+}
+.s-stats .stat {
+  background: var(--cream);
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  padding: 32px 30px;
+  display: flex; flex-direction: column; gap: 14px;
+  position: relative;
+  box-shadow: 5px 6px 0 0 var(--ink);
+}
+.s-stats .stat.alt  { background: var(--paper-2); }
+.s-stats .stat.alt2 { background: #FBE6A4; }
+.s-stats .stat .pin {
+  position: absolute; top: -14px; left: 32px;
+  width: 110px; height: 32px;
+  color: var(--ink);
+  transform: rotate(-8deg);
+}
+.s-stats .stat .big {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 168px; line-height: .85; letter-spacing: -.04em;
+  margin-top: 16px;
+}
+.s-stats .stat .big small {
+  font-family: var(--font-scribble); font-weight: 700;
+  font-size: 60px; vertical-align: top; margin-left: 6px;
+}
+.s-stats .stat h3 {
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 30px; letter-spacing: -.015em;
+  margin: auto 0 0; line-height: 1.05;
+}
+.s-stats .stat p { font-size: 24px; line-height: 1.45; margin: 0; }
+
+/* ============ 11 CTA ============ */
+.s-cta { padding: 0; }
+.s-cta .stage {
+  position: absolute; inset: 0;
+  padding: 110px 64px 90px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+}
+.s-cta .pane {
+  border-radius: 4px;
+  padding: 40px;
+  display: flex; flex-direction: column; gap: 20px;
+  position: relative;
+}
+.s-cta .pane.l {
+  background: var(--ink); color: var(--paper);
+  justify-content: space-between;
+}
+.s-cta .pane.r {
+  background: var(--cream);
+  border: 1.5px solid var(--ink);
+  box-shadow: 5px 6px 0 0 var(--ink);
+}
+.s-cta .pane.l .super {
+  font-family: var(--font-mono); font-weight: 500;
+  font-size: 16px; letter-spacing: .22em; text-transform: uppercase;
+  opacity: .8;
+}
+.s-cta .pane.l h2 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 130px; line-height: 1.05; letter-spacing: -.035em; margin: 0;
+}
+.s-cta .pane.l p { font-size: 24px; line-height: 1.5; opacity: .9; max-width: 30ch; }
+.s-cta .pane.l .pin {
+  position: absolute; bottom: 40px; right: 40px;
+  width: 220px; color: var(--paper); opacity: .9;
+  transform: rotate(-12deg);
+}
+.s-cta .pane.r h3 {
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 36px; letter-spacing: -.015em; margin: 0;
+}
+.s-cta .pane.r .step {
+  display: grid; grid-template-columns: 70px 1fr; gap: 14px; align-items: start;
+  padding: 12px 0;
+  border-top: 1.5px dashed rgba(31,58,138,.45);
+}
+.s-cta .pane.r .step:first-of-type { border-top: 0; }
+.s-cta .pane.r .step .n {
+  font-family: var(--font-scribble); font-weight: 700;
+  font-size: 60px; line-height: .9; color: var(--ink);
+}
+.s-cta .pane.r .step h4 {
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 26px; letter-spacing: -.005em; margin: 0 0 4px;
+}
+.s-cta .pane.r .step p { font-size: 22px; line-height: 1.4; margin: 0; }
+
+/* ==== CJK adjustments (per design.md) ==== */
+h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-spacing: .1em; }
+.s-cover .row .who, .s-cover .row .who small { letter-spacing: .08em; }
+.s-notes .card p, .s-notice .col p, .s-notice .col ul li { line-height: 1.6; }
+
+/* ==== 04 SYSTEM ARCHITECTURE — custom layout, extends the design system ==== */
+.s-arch .head {
+  position: absolute; left: 64px; right: 64px; top: 110px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 40px;
+}
+.s-arch .head h2 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 88px; line-height: 1.05; margin: 0;
+}
+.s-arch .head .sub {
+  font-size: 23px; line-height: 1.5; max-width: 36ch; opacity: .85; margin-top: 12px;
+}
+.s-arch .stack {
+  position: absolute; left: 64px; right: 64px; top: 430px; bottom: 100px;
+  display: grid; grid-template-rows: 1fr 46px 1fr 46px 1fr;
+}
+.s-arch .layer {
+  background: var(--cream);
+  border: 1.5px solid var(--ink); border-radius: 4px;
+  box-shadow: 4px 5px 0 0 var(--ink);
+  display: grid; grid-template-columns: 280px 1fr 340px;
+  align-items: center; padding: 0 36px 0 150px; position: relative;
+}
+.s-arch .layer.b { background: var(--paper-2); }
+.s-arch .layer.c { background: #FBE6A4; }
+.s-arch .layer .pin {
+  position: absolute; top: -15px; left: 26px;
+  width: 110px; height: 32px; color: var(--ink); transform: rotate(-8deg);
+}
+.s-arch .layer .ltag {
+  font-family: var(--font-mono); font-weight: 500;
+  font-size: 17px; letter-spacing: .12em; text-transform: uppercase; line-height: 1.7;
+  border-right: 1.5px dashed rgba(31,58,138,.45); padding-right: 28px;
+}
+.s-arch .layer .ltag b {
+  display: block;
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 30px; letter-spacing: 0; text-transform: none; line-height: 1.15;
+}
+.s-arch .layer h3 {
+  font-family: var(--font-reg); font-weight: 700;
+  font-size: 30px; margin: 0 0 8px;
+}
+.s-arch .layer p { font-size: 22px; line-height: 1.5; margin: 0; }
+.s-arch .layer .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.s-arch .layer .chips span {
+  font-family: var(--font-mono); font-weight: 500;
+  font-size: 17px; letter-spacing: .05em;
+  border: 1.5px solid var(--ink); border-radius: 999px;
+  padding: 5px 14px; background: var(--cream);
+}
+.s-arch .down { display: flex; align-items: center; justify-content: center; gap: 14px; color: var(--ink); }
+.s-arch .down svg { width: 30px; height: 30px; transform: rotate(90deg); }
+.s-arch .down span {
+  font-family: var(--font-mono); font-weight: 500;
+  font-size: 17px; letter-spacing: .1em; text-transform: uppercase; opacity: .75;
+}
+
+/* ==== page 8 key-info pin cards (replaces timeline) ==== */
+.s-process .cards {
+  position: absolute; left: 64px; right: 64px; bottom: 100px; height: 150px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;
+}
+.s-process .cards .kcard {
+  background: var(--cream);
+  border: 1.5px solid var(--ink); border-radius: 4px;
+  box-shadow: 4px 5px 0 0 var(--ink);
+  padding: 18px 24px 14px;
+  display: flex; align-items: center; gap: 20px;
+  position: relative;
+}
+.s-process .cards .kcard.alt  { background: var(--paper-2); }
+.s-process .cards .kcard.alt2 { background: #FBE6A4; }
+.s-process .cards .kcard .pin {
+  position: absolute; top: -14px; left: 24px;
+  width: 90px; height: 26px; color: var(--ink); transform: rotate(-6deg);
+}
+.s-process .cards .kcard .big {
+  font-family: var(--font-scribble); font-weight: 700;
+  font-size: 64px; line-height: .9; color: var(--ink); white-space: nowrap;
+}
+.s-process .cards .kcard h4 {
+  font-family: var(--font-reg); font-weight: 700; font-size: 26px; margin: 0 0 6px;
+}
+.s-process .cards .kcard p { font-size: 20px; line-height: 1.45; margin: 0; }
+</style>
+<script src="deck-stage.js"></script>
+
+<!-- reusable safety pin svg, used via <use href="#pin"> -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- closed safety pin: coil on right, shaft sweeping left, clasp cap on the left holding the point -->
+    <symbol id="pin" viewBox="0 0 360 110">
+      <g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- coiled spring (one continuous loop) -->
+        <path d="M312 38 C 296 32, 290 50, 304 58 C 320 66, 340 60, 342 44 C 344 28, 322 18, 300 24"/>
+        <!-- top shaft running from coil to clasp -->
+        <path d="M300 24 C 240 14, 140 14, 70 30"/>
+        <!-- bottom shaft (the part holding the point) curving back under -->
+        <path d="M312 56 C 250 78, 150 82, 80 70"/>
+        <!-- clasp cap (oval) covering where the two shafts meet on the left -->
+        <ellipse cx="58" cy="50" rx="24" ry="14"/>
+      </g>
+    </symbol>
+
+    <!-- open safety pin: clasp lifted, sharp point exposed pointing left -->
+    <symbol id="pin-open" viewBox="0 0 360 130">
+      <g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- coiled spring -->
+        <path d="M312 48 C 296 42, 290 60, 304 68 C 320 76, 340 70, 342 54 C 344 38, 322 28, 300 34"/>
+        <!-- top shaft -->
+        <path d="M300 34 C 240 24, 140 24, 70 40"/>
+        <!-- bottom shaft (the pointed one), now extending past where the clasp would be, into a sharp point -->
+        <path d="M312 66 C 250 90, 150 96, 80 86 L 24 78 L 38 70 M24 78 L 38 88"/>
+        <!-- clasp, lifted above where the point used to sit -->
+        <ellipse cx="82" cy="32" rx="22" ry="12" transform="rotate(-18 82 32)"/>
+      </g>
+    </symbol>
+
+    <!-- arrow for process flow -->
+    <symbol id="arr" viewBox="0 0 32 32">
+      <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 16 H26 M19 9 L26 16 L19 23"/>
+      </g>
+    </symbol>
+
+    <!-- small inline mark for the top-chrome lockup -->
+    <symbol id="mark" viewBox="0 0 32 16">
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="26" cy="8" r="5"/>
+        <path d="M21 8 H 6 M6 5 L 3 8 L 6 11"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<script type="application/json" id="speaker-notes">[]</script>
+</head>
+<body>
+
+<deck-stage>
+
+  <!-- ============ 01 封面 ============ -->
+  <section class="slide s-cover" data-screen-label="01 封面" data-om-validate="false">
+    <svg class="pin-1" viewBox="0 0 360 110"><use href="#pin"/></svg>
+    <svg class="pin-2" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+    <div class="stage">
+      <div class="super">第4组 · 华东师范大学第二附属中学</div>
+      <h1>物候<br/>Campus Cycle</h1>
+      <div class="row">
+        <div class="who"><span class="underline-thin">陈鑫泽 · 陆韬宁 · 李昀洁</span>
+          <small>万物有时 · 静候良人 —— AI 驱动的校园闲置流转平台</small>
+        </div>
+      </div>
+    </div>
+    <div class="handwritten">
+      <span class="underline">致</span> 学弟学妹：<br/>
+      毕业季的旧物，<br/>值得下一个主人。
+    </div>
+  </section>
+
+  <!-- ============ 02 项目演示 ============ -->
+  <section class="slide s-demo" data-screen-label="02 项目演示" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 项目演示</span>
+      <span class="meta"><span>线上体验</span></span>
+    </div>
+    <div class="stage">
+      <div class="left">
+        <h2>现场演示</h2>
+        <div class="url">wuhou.netlify.app</div>
+        <p>扫码或手机打开链接，三分钟走完从上架到匹配的完整流程；学生与审核员双端均可登录体验。</p>
+      </div>
+      <div class="qr">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <img src="assets/qr.png" alt="wuhou.netlify.app 二维码" />
+        <div class="cap">扫码即达 · 免安装</div>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>02 / 13</span></div>
+  </section>
+
+  <!-- ============ 03 目录 ============ -->
+  <section class="slide s-toc" data-screen-label="03 目录" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 目录</span>
+      <span class="meta"><span>Contents</span></span>
+    </div>
+    <h2>目录</h2>
+    <div class="list">
+      <div class="trow">
+        <span class="num">01</span>
+        <span class="lab">背景与痛点</span>
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="meta">P · 04</span>
+      </div>
+      <div class="trow">
+        <span class="num">02</span>
+        <span class="lab">定位与角色体系</span>
+        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+        <span class="meta">P · 05</span>
+      </div>
+      <div class="trow">
+        <span class="num">03</span>
+        <span class="lab">系统架构</span>
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="meta">P · 06</span>
+      </div>
+      <div class="trow">
+        <span class="num">04</span>
+        <span class="lab">课程技术点 · VLM / NLP / 视觉质检</span>
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="meta">P · 07–09</span>
+      </div>
+      <div class="trow">
+        <span class="num">05</span>
+        <span class="lab">核心功能演示 · 含实际使用截图</span>
+        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+        <span class="meta">P · 10–11</span>
+      </div>
+      <div class="trow">
+        <span class="num">06</span>
+        <span class="lab">安全与工程质量</span>
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="meta">P · 12</span>
+      </div>
+      <div class="trow">
+        <span class="num">07</span>
+        <span class="lab">总结与展望</span>
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="meta">P · 13</span>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>03 / 13</span></div>
+  </section>
+
+  <!-- ============ 02 背景与痛点 ============ -->
+  <section class="slide s-agenda" data-screen-label="04 背景与痛点" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 背景 · 痛点</span>
+      <span class="meta"><span>结课答辩</span></span>
+    </div>
+    <h2>毕业季的另一面</h2>
+    <div class="grid">
+      <div class="card">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="num">痛点 · 01</span>
+        <h3>毕业季的丢弃与浪费</h3>
+        <p>每年毕业季，大量教材、正装与生活物品被直接丢弃，浪费严重。</p>
+      </div>
+      <div class="card alt">
+        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+        <span class="num">痛点 · 02</span>
+        <h3>低年级的真实需求</h3>
+        <p>学弟学妹恰好需要这些物品，却缺乏可信的二手信息渠道。</p>
+      </div>
+      <div class="card alt2">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="num">痛点 · 03</span>
+        <h3>传统平台三重痛点</h3>
+        <p>信息不全、定价模糊、信任缺失，好物沉在信息海里。</p>
+      </div>
+      <div class="card alt">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="num">答案 · 04</span>
+        <h3>让 AI 接管</h3>
+        <p>识别分类、定价参考、暖心文案、供需匹配，一站完成。</p>
+        <div class="scribble">旧物值得<span class="underline">下一个主人</span></div>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>04 / 13</span></div>
+  </section>
+
+  <!-- ============ 03 定位与角色体系 ============ -->
+  <section class="slide s-notes" data-screen-label="05 定位与角色体系" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 定位 · 角色</span>
+      <span class="meta"><span>结课答辩</span></span>
+    </div>
+    <div class="head">
+      <h2>定位与角色体系</h2>
+      <div class="sub">一句话定位：拍照即上架，一句话找到心仪物品 —— 登录后按角色自动分流，三类角色物理隔离。</div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="num">定位</span>
+        <h3>拍照即上架，<br/>一句话找到好物</h3>
+        <p>卖家拍照上传，AI 自动识别分类并生成暖心文案；买家用一句自然语言描述需求，AI 解析后由匹配引擎推荐最合适的物品。</p>
+        <div class="scribble">万物有时，<span class="underline">静候良人</span></div>
+      </div>
+      <div class="card alt">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="num">角色 · 学生端</span>
+        <h3>学生端<br/>四大模块</h3>
+        <p>我要买（AI 匹配）· 我要卖（拍照识物）· 援助池（困难生定向）· 我的交易（模拟钱包与订单）。</p>
+        <div class="scribble">买 · 卖 · 援 · 账</div>
+      </div>
+      <div class="card alt2">
+        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+        <span class="num">角色 · 审核员</span>
+        <h3>审核员<br/>工作台</h3>
+        <p>学生认证、物品审核、举报处理、批量审核、交易总览 —— 治理闭环一站完成，平台才可信。</p>
+        <div class="scribble">有人管，才可信。</div>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>05 / 13</span></div>
+  </section>
+
+  <!-- ============ 04 系统架构 ============ -->
+  <section class="slide s-arch" data-screen-label="06 系统架构" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 系统架构</span>
+      <span class="meta"><span>结课答辩</span></span>
+    </div>
+    <div class="head">
+      <h2>系统架构 ·<br/>轻量 Serverless</h2>
+      <div class="sub">纯前端 + Serverless，无自建服务器；AI 密钥仅存后端环境变量，前端零密钥；SMTP 邮件负责验证码与随机密码下发。</div>
+    </div>
+    <div class="stack">
+      <div class="layer">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <div class="ltag">Layer · 01<b>浏览器层</b>原生 JS 模块化前端</div>
+        <div>
+          <h3>无框架依赖的三端界面</h3>
+          <p>学生端 / 审核员端 / 个人中心，登录后按角色分流渲染。</p>
+        </div>
+        <div class="chips"><span>学生端</span><span>审核员端</span><span>个人中心</span></div>
+      </div>
+      <div class="down">
+        <svg viewBox="0 0 32 32"><use href="#arr"/></svg>
+        <span>Fetch · Bearer Token</span>
+      </div>
+      <div class="layer b">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <div class="ltag">Layer · 02<b>Functions 层</b>Netlify Serverless</div>
+        <div>
+          <h3>四个接口，各司其职</h3>
+          <p>鉴权、AI 代理、业务数据、图片处理，密钥只在服务端。</p>
+        </div>
+        <div class="chips"><span>auth</span><span>ai</span><span>data</span><span>image</span></div>
+      </div>
+      <div class="down">
+        <svg viewBox="0 0 32 32"><use href="#arr"/></svg>
+        <span>Blobs SDK · DashScope API</span>
+      </div>
+      <div class="layer c">
+        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+        <div class="ltag">Layer · 03<b>存储与 AI 层</b>数据 × 模型 × 通道</div>
+        <div>
+          <h3>键值存储 + 双模型 + 邮件</h3>
+          <p>Netlify Blobs 存用户 / 会话 / 业务 / 图片；阿里云百炼提供 Qwen-VL 与 Qwen。</p>
+        </div>
+        <div class="chips"><span>Blobs</span><span>Qwen-VL</span><span>Qwen</span><span>SMTP</span></div>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>06 / 13</span></div>
+  </section>
+
+  <!-- ============ 05 技术点 1 · VLM 看图识物 ============ -->
+  <section class="slide s-notice" data-screen-label="07 VLM 看图识物" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 技术点 · 01 VLM</span>
+      <span class="meta"><span>看图识物</span></span>
+    </div>
+    <div class="head split">
+      <h2>VLM<br/>看图识物</h2>
+      <div class="sub">Qwen-VL-Max 经后端代理调用，密钥仅存后端、前端零暴露；一次拍照同时返回类别、名称、成色评估与暖心文案。</div>
+    </div>
+    <div class="grid">
+      <div class="col">
+        <h3>模型与链路</h3>
+        <ul>
+          <li><strong>Qwen-VL-Max</strong> 视觉语言模型，经 Netlify Functions 后端代理调用。</li>
+          <li><strong>密钥仅存后端</strong>环境变量，前端零密钥暴露。</li>
+          <li><strong>图片先压缩</strong>至 2MB 以内再上传识别，省流量也省配额。</li>
+        </ul>
+      </div>
+      <div class="col b">
+        <h3>一次调用，四样东西</h3>
+        <ul>
+          <li><strong>物品类别</strong> —— 教材 / 服饰 / 生活等六大类精准定类</li>
+          <li><strong>物品名称</strong> —— 具体书名、品牌与型号一眼可读</li>
+          <li><strong>成色评估</strong> —— 新旧程度一句话判读，定价有据</li>
+          <li><strong>暖心文案</strong> —— 面向学弟学妹的自述，替代千篇一律</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>降级链兜底</h3>
+        <ul>
+          <li><strong>① 调用失败</strong> —— 网络或配额异常自动捕获</li>
+          <li><strong>② 回退演示数据</strong> —— 识别结果即时兜底</li>
+          <li><strong>③ 手动补全</strong> —— 卖家确认修改，发布不阻断</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>07 / 13</span></div>
+  </section>
+
+  <!-- ============ 06 技术点 2 · NLP 解析 + Agent 匹配 ============ -->
+  <section class="slide s-matrix" data-screen-label="08 NLP 与 Agent 匹配" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 技术点 · 02 匹配</span>
+      <span class="meta"><span>需求解析</span></span>
+    </div>
+    <div class="head">
+      <h2>一句话需求，<br/>规则引擎打分排序</h2>
+      <div class="sub">买家示例：「求一本大一下高数书，最好有笔记，20 元以内」。Qwen-Plus 解析为结构化需求（类别 / 科目 / 预算 / 笔记），失败回退正则解析；援助池另走免费公益加权，为困难生定向匹配 Top 3。</div>
+    </div>
+    <div class="table">
+      <div class="cell head-row">打分维度</div>
+      <div class="cell head-row">加分</div>
+      <div class="cell head-row">判定依据</div>
+      <div class="cell head-row">对应示例</div>
+
+      <div class="cell row-label">类别匹配</div>
+      <div class="cell"><span class="pill yes">+40</span></div>
+      <div class="cell">解析类别与物品六大类一致</div>
+      <div class="cell">买家首要意图</div>
+
+      <div class="cell row-label">科目匹配</div>
+      <div class="cell"><span class="pill yes">+30</span></div>
+      <div class="cell">教材科目与需求科目对应</div>
+      <div class="cell">「大一下高数」</div>
+
+      <div class="cell row-label">预算之内</div>
+      <div class="cell"><span class="pill yes">+20</span></div>
+      <div class="cell">价格不高于解析预算上限</div>
+      <div class="cell">「20 元以内」</div>
+
+      <div class="cell row-label">笔记需求</div>
+      <div class="cell"><span class="pill yes">+10</span></div>
+      <div class="cell">物品备注含笔记且买家想要</div>
+      <div class="cell">「最好有笔记」</div>
+
+      <div class="cell row-label last">零举报</div>
+      <div class="cell last"><span class="pill yes">+5</span></div>
+      <div class="cell last">卖家无有效举报记录</div>
+      <div class="cell last">信誉加成</div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>08 / 13</span></div>
+  </section>
+
+  <!-- ============ 07 技术点 3 · MediaPipe 视觉质检 + 扩展 AI ============ -->
+  <section class="slide s-stats" data-screen-label="09 视觉质检与扩展" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 技术点 · 03 视觉</span>
+      <span class="meta"><span>质检与扩展</span></span>
+    </div>
+    <div class="head">
+      <h2>视觉质检<br/>与扩展 AI</h2>
+      <div class="sub">从「手上」到「云上」：浏览器本地的视觉检测零服务器开销，脱敏交易流水交给 Qwen 生成运营洞察。</div>
+    </div>
+    <div class="grid">
+      <div class="stat">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <div class="big">21<small>点</small></div>
+        <h3>手部遮挡质检</h3>
+        <p>MediaPipe Hands 追踪 21 个手部关键点，检测上传照片中的手部遮挡并提示重拍，保障二手图片质量。</p>
+      </div>
+      <div class="stat alt">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <div class="big">0<small>服务器</small></div>
+        <h3>浏览器端目标检测</h3>
+        <p>YOLOv8n 经 ONNX Runtime Web 在浏览器本地推理，零服务器开销的目标检测扩展。</p>
+      </div>
+      <div class="stat alt2">
+        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+        <div class="big">4<small>维</small></div>
+        <h3>AI 交易流水分析</h3>
+        <p>脱敏订单数据送 Qwen，生成概览 / 异常风险 / 品类洞察 / 运营建议的 Markdown 报告。</p>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>09 / 13</span></div>
+  </section>
+
+  <!-- ============ 08 核心功能演示 · 托管交易状态机 ============ -->
+  <section class="slide s-process" data-screen-label="10 核心功能演示" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 功能演示</span>
+      <span class="meta"><span>托管交易</span></span>
+    </div>
+    <div class="head">
+      <h2>托管交易<br/>状态机</h2>
+      <div class="sub">模拟钱包全程托管（初始 ¥1000）：下单即扣款冻结，卖家接受或拒绝，完成到账、取消退款，每一步都有状态流转与通知。</div>
+    </div>
+    <div class="flow">
+      <div class="node">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <div class="n">1</div>
+        <h3>下单冻结</h3>
+        <p>买家下单，款项即时冻结进入平台托管。</p>
+        <svg class="arr" viewBox="0 0 32 32"><use href="#arr"/></svg>
+      </div>
+      <div class="node alt">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <div class="n">2</div>
+        <h3>卖家接受</h3>
+        <p>卖家确认订单，交易进入履约阶段。</p>
+        <svg class="arr" viewBox="0 0 32 32"><use href="#arr"/></svg>
+      </div>
+      <div class="node alt2">
+        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+        <div class="n">3</div>
+        <h3>完成到账</h3>
+        <p>双方确认收货，托管款项到账卖家。</p>
+        <svg class="arr" viewBox="0 0 32 32"><use href="#arr"/></svg>
+      </div>
+      <div class="node alt">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <div class="n">4</div>
+        <h3>取消退款</h3>
+        <p>卖家拒绝或超时未响应，款项原路退回。</p>
+        <svg class="arr" viewBox="0 0 32 32"><use href="#arr"/></svg>
+      </div>
+      <div class="node">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <div class="n">5</div>
+        <h3>评价徽章</h3>
+        <p>星级评价沉淀卖家信誉徽章。</p>
+      </div>
+    </div>
+    <div class="cards">
+      <div class="kcard">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <div class="big">¥1000</div>
+        <div>
+          <h4>托管钱包</h4>
+          <p>初始额度 · 下单冻结 · 完成到账 · 取消退款</p>
+        </div>
+      </div>
+      <div class="kcard alt">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <div class="big">4类</div>
+        <div>
+          <h4>站内消息中心</h4>
+          <p>下单 / 过审 / 援助 / 心愿上新自动通知 + 未读角标</p>
+        </div>
+      </div>
+      <div class="kcard alt2">
+        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+        <div class="big">闭环</div>
+        <div>
+          <h4>心愿单供需闭环</h4>
+          <p>加心愿 → 需求风向标聚合计数 → 过审自动提醒</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>10 / 13</span></div>
+  </section>
+
+  <!-- ============ 11 实际使用一览 ============ -->
+  <section class="slide s-shots" data-screen-label="11 实际使用一览" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 实际使用</span>
+      <span class="meta"><span>四个界面</span></span>
+    </div>
+    <div class="head">
+      <h2>实际使用一览</h2>
+      <div class="sub">学生端三大模块与审核员工作台实拍：从买卖到援助再到治理，全流程线上可复现。</div>
+    </div>
+    <div class="grid">
+      <div class="shot">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <img src="assets/buy.png" alt="我要买" />
+        <div class="cap"><h4>我要买</h4><p>一句话需求，AI 匹配引擎打分排序</p></div>
+      </div>
+      <div class="shot alt">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <img src="assets/sell.png" alt="我要卖" />
+        <div class="cap"><h4>我要卖</h4><p>拍照上传，VLM 识别分类并生成暖心文案</p></div>
+      </div>
+      <div class="shot alt2">
+        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+        <img src="assets/aid.png" alt="援助池" />
+        <div class="cap"><h4>援助池</h4><p>困难生定向，公益加权匹配</p></div>
+      </div>
+      <div class="shot alt">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <img src="assets/review.png" alt="审核员工作台" />
+        <div class="cap"><h4>审核员工作台</h4><p>认证 · 审核 · 举报 · 交易总览</p></div>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>11 / 13</span></div>
+  </section>
+
+  <!-- ============ 09 安全与工程质量（加分项） ============ -->
+  <section class="slide s-notice" data-screen-label="12 安全与工程" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 安全 · 工程</span>
+    </div>
+    <div class="head split">
+      <h2>安全与<br/>工程质量</h2>
+      <div class="sub">登录鉴权统一守卫，密码与会话全链路加固 —— 防篡改、防盗刷、防 XSS。</div>
+    </div>
+    <div class="grid">
+      <div class="col">
+        <h3>接口鉴权</h3>
+        <ul>
+          <li><strong>全部业务接口</strong>登录鉴权，Bearer Token 统一守卫。</li>
+          <li><strong>防数据篡改</strong>与 AI 配额盗刷。</li>
+          <li><strong>会话 7 天</strong>有效期，过期自动登出。</li>
+        </ul>
+      </div>
+      <div class="col b">
+        <h3>密码与登录</h3>
+        <div class="meta">5 次失败，锁定 10 分钟</div>
+        <p>密码 pbkdf2 哈希存储；验证码密码学安全随机生成；登录失败 5 次锁定 10 分钟，暴力破解无从下手。</p>
+      </div>
+      <div class="col">
+        <h3>数据与工程化</h3>
+        <ul>
+          <li><strong>全站 XSS 转义</strong>防护，图片上传 2MB 限制。</li>
+          <li><strong>共享设计系统</strong> common.css，数据层统一 data-module。</li>
+          <li><strong>渲染防抖防乱序</strong>，列表滚动不闪烁。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>12 / 13</span></div>
+  </section>
+
+  <!-- ============ 10 总结与展望 ============ -->
+  <section class="slide s-cta" data-screen-label="13 总结与展望" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 总结 · 展望</span>
+      <span class="meta"><span>致谢</span></span>
+    </div>
+    <div class="stage">
+      <div class="pane l">
+        <div class="super">总结 · 致谢</div>
+        <h2>万物有时<br/>静候良人</h2>
+        <p>完整走通「拍照 → 识别 → 文案 → 审核 → 匹配 → 交易 → 评价 → 通知」闭环；四个课程技术点全部落地，真实调用链路可查。感谢聆听。</p>
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+      </div>
+      <div class="pane r">
+        <h3>展望 · 下一步</h3>
+        <div class="step">
+          <div class="n">1</div>
+          <div>
+            <h4>语义向量检索</h4>
+            <p>匹配引擎从规则打分升级为语义相似度，长尾需求也能命中。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="n">2</div>
+          <div>
+            <h4>AI 智能定价</h4>
+            <p>结合成色评估与历史成交，给出可信的定价参考。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="n">3</div>
+          <div>
+            <h4>微信小程序端</h4>
+            <p>触达更多校园场景，随时随地拍照上架。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="n">4</div>
+          <div>
+            <h4>真实的交易过程</h4>
+            <p>托管交易从模拟钱包走向真实支付，在校园场景完成真实闭环验证。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>13 / 13</span></div>
+  </section>
+
+</deck-stage>
+
+</body>
+</html>

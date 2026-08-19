@@ -30,20 +30,20 @@
     .head .title { font-size: 20px; font-weight: 700; }
     .head .sub { font-size: 13px; opacity: .9; margin-top: 2px; }
     .body { padding: 24px 28px 28px; }
-    .tabs { display: flex; gap: 6px; background: var(--bg); padding: 4px; border-radius: 10px; margin-bottom: 20px; }
+    .tabs { display: flex; gap: 6px; background: var(--bg); padding: 4px; border-radius: var(--radius-md); margin-bottom: 20px; }
     .tabs button { flex: 1; border: 0; background: transparent; padding: 9px 0; border-radius: 8px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .18s; }
     .tabs button.active { background: var(--card); color: var(--red); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
     .field { margin-bottom: 14px; }
     .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
-    .field input { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; font-size: 15px; color: var(--ink); background: var(--card); transition: border-color .18s; }
+    .field input { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 15px; color: var(--ink); background: var(--card); transition: border-color .18s; }
     .field input:focus { outline: none; border-color: var(--red); }
     .field input::placeholder { color: #aab1bb; }
     .code-row { display: flex; gap: 8px; }
     .code-row input { flex: 1; }
-    .code-btn { flex: 0 0 auto; padding: 0 14px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); color: var(--red); font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .18s; }
+    .code-btn { flex: 0 0 auto; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--card); color: var(--red); font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .18s; }
     .code-btn:disabled { color: var(--muted); cursor: not-allowed; }
     .code-btn:not(:disabled):hover { border-color: var(--red); }
-    .submit { width: 100%; padding: 12px; border: 0; border-radius: 10px; background: var(--red); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: background .18s, transform .1s; }
+    .submit { width: 100%; padding: 12px; border: 0; border-radius: var(--radius-md); background: var(--red); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: background .18s, transform .1s; }
     .submit:hover { background: var(--red-dark); }
     .submit:active { transform: scale(.99); }
     .submit:disabled { background: #d9a0a7; cursor: not-allowed; }

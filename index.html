@@ -41,13 +41,13 @@
     }
 
     .topbar {
-      height: 72px;
+      height: 64px;
       background: var(--card);
       border-bottom: 1px solid var(--line);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 40px;
+      padding: 0 32px;
       position: sticky;
       top: 0;
       z-index: 10;
@@ -61,9 +61,9 @@
     }
 
     .brand-mark {
-      width: 38px;
-      height: 38px;
-      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
       background: var(--red);
       color: white;
       display: grid;
@@ -72,8 +72,8 @@
     }
 
     .brand-title {
-      font-size: 18px;
-      font-weight: 760;
+      font-size: 17px;
+      font-weight: 700;
     }
 
     .brand-subtitle {
@@ -499,7 +499,14 @@
       border-radius: 8px;
       padding: 14px;
       background: white;
+      transition: transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
     }
+    .item-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(200, 25, 46, 0.32);
+      box-shadow: var(--shadow-soft);
+    }
+    .item-card:active { transform: translateY(-1px); }
 
     .item-top {
       display: flex;
@@ -561,10 +568,35 @@
       border-radius: 999px;
       background: #f2f3f5;
       color: #4c5563;
-      padding: 5px 8px;
+      padding: 4px 10px;
       font-size: 12px;
       line-height: 1;
     }
+
+    /* ===== 收藏 / 心愿单 图标按钮态 ===== */
+    .fav-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--cream);
+      font-size: 17px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      transition: transform .16s var(--ease), border-color .16s var(--ease), box-shadow .16s var(--ease), background-color .16s var(--ease);
+    }
+    .fav-btn:hover {
+      transform: scale(1.12);
+      border-color: var(--red);
+      background: var(--red-soft);
+      box-shadow: var(--shadow-soft);
+    }
+    .fav-btn:active { transform: scale(.9); }
+    .wish-btn { padding: 5px 12px; font-size: 12px; min-height: 0; }
+    .wish-btn:hover { background: var(--gold-soft); color: var(--gold); }
 
     .tag.red {
       background: var(--red-soft);
@@ -644,7 +676,9 @@
       height: 160px;
       object-fit: cover;
       display: block;
+      transition: transform .28s var(--ease);
     }
+    .item-card:hover .card-thumb img { transform: scale(1.045); }
     .card-thumb.placeholder {
       height: 64px;
       display: grid;
@@ -1833,6 +1867,11 @@
     var DM = window.DataModule;
     var NM = window.NotifyModule;
     var U = window.Utils;
+    // 统一轻提示：优先 toast，Utils 缺失时回退 alert
+    function uiTip(msg, type) {
+      if (window.Utils && Utils.showToast) { Utils.showToast(msg, type); }
+      else { alert(msg); }
+    }
     var IC = window.ImageCompressor;
     var STORAGE_KEY = DM.getStorageKey();
     var seedData = DM.getSeedData();
@@ -2031,12 +2070,12 @@
       if (!user) { window.AuthModule.gotoLogin(); return; }
       const item = data.items.find((i) => i.id === itemId);
       if (!item) return;
-      if (item.status !== "approved") { alert("该物品未上架"); return; }
-      if (item.txStatus === "reserved") { alert("该物品已被预订"); return; }
-      if (item.txStatus === "sold") { alert("该物品已售出"); return; }
-      if (item.ownerId && item.ownerId === user.studentId) { alert("不能购买自己的物品"); return; }
+      if (item.status !== "approved") { uiTip("该物品未上架", "warn"); return; }
+      if (item.txStatus === "reserved") { uiTip("该物品已被预订", "warn"); return; }
+      if (item.txStatus === "sold") { uiTip("该物品已售出", "warn"); return; }
+      if (item.ownerId && item.ownerId === user.studentId) { uiTip("不能购买自己的物品", "warn"); return; }
       const balance = getBalance(user.studentId);
-      if (balance < item.price) { alert("余额不足（当前 ￥" + balance + "），请先充值"); return; }
+      if (balance < item.price) { uiTip("余额不足（当前 ￥" + balance + "），请先充值", "warn"); return; }
       adjustBalance(user.studentId, -item.price); // 扣款托管
       const order = {
         id: "order-" + Date.now(),
@@ -2065,7 +2104,7 @@
       saveData(data);
       renderTradePage();
       renderBuyerResults();
-      alert("已下单并扣款 ￥" + item.price + "，等待卖家确认。可在「我的交易」查看。");
+      uiTip("已下单并扣款 ￥" + item.price + "，等待卖家确认，可在「我的交易」查看", "success");
     }
 
     function acceptOrder(orderId) {
@@ -2220,7 +2259,7 @@
       const user = window.AuthModule.getCurrentUser();
       if (!user) return;
       const n = Number(amount);
-      if (!n || n <= 0) { alert("请输入正数金额"); return; }
+      if (!n || n <= 0) { uiTip("请输入正数金额", "warn"); return; }
       adjustBalance(user.studentId, n);
       saveData(data);
       renderTradePage();
@@ -2229,9 +2268,9 @@
       const user = window.AuthModule.getCurrentUser();
       if (!user) return;
       const n = Number(amount);
-      if (!n || n <= 0) { alert("请输入正数金额"); return; }
+      if (!n || n <= 0) { uiTip("请输入正数金额", "warn"); return; }
       const bal = getBalance(user.studentId);
-      if (n > bal) { alert("余额不足，当前余额 ￥" + bal); return; }
+      if (n > bal) { uiTip("余额不足，当前余额 ￥" + bal, "warn"); return; }
       adjustBalance(user.studentId, -n);
       saveData(data);
       renderTradePage();
@@ -2327,12 +2366,12 @@
         : item.txStatus === "reserved" ? `<span class="tag warn">已预订</span>` : "";
       const isFav = isFavorite(item.id);
       const favBtn = options.allowReport
-        ? `<span class="fav-btn" data-fav="${escapeHTML(item.id)}" style="cursor:pointer;font-size:18px;user-select:none;">${isFav ? "❤️" : "🤍"}</span>`
+        ? `<span class="fav-btn" data-fav="${escapeHTML(item.id)}">${isFav ? "❤️" : "🤍"}</span>`
         : "";
       // 心愿单按钮：买家检索结果卡（记录类别+科目意向，卖家端聚合成风向标）
       const wished = isInWishlist(item);
       const wishBtn = options.allowReport
-        ? `<button class="trade-btn ghost wish-btn" data-wish="${escapeHTML(item.id)}" style="padding:4px 10px;font-size:12px;min-height:0;">${wished ? "★ 已在心愿单" : "☆ 加入心愿单"}</button>`
+        ? `<button class="trade-btn ghost wish-btn" data-wish="${escapeHTML(item.id)}">${wished ? "★ 已在心愿单" : "☆ 加入心愿单"}</button>`
         : "";
       const thumb = item.image
         ? `<div class="card-thumb" data-detail="${escapeHTML(item.id)}"><img src="${escapeHTML(item.image)}" alt="实物图" /><span class="zoom-hint">🔍 点击查看详情</span></div>`
@@ -3401,7 +3440,7 @@
       data.currentDraft.description = document.getElementById("resultDescription").value.trim();
       data.currentDraft.conditionLevel = document.getElementById("conditionLevel").value;
       data.currentDraft.conditionDetail = document.getElementById("conditionDetail").value.trim();
-      alert("草稿已保存，演示时可继续修改后提交审核。");
+      uiTip("草稿已保存，可继续修改后提交审核", "success");
     });
 
     document.getElementById("submitItem").addEventListener("click", async () => {
@@ -3417,7 +3456,7 @@
       // 验证至少填写一种联系方式
       if (!data.currentDraft.phone && !data.currentDraft.email) {
         document.getElementById("sellerPhone").focus();
-        alert("请至少填写手机号或邮箱，以便买家联系您。");
+        uiTip("请至少填写手机号或邮箱，以便买家联系您", "warn");
         return;
       }
       submitBtn.disabled = true;
@@ -3434,7 +3473,7 @@
       saveData(data);
       submitBtn.disabled = false;
       submitBtn.textContent = "提交审核";
-      alert("已提交审核。审核通过后，买家页面才会展示该物品。");
+      uiTip("已提交审核，通过后买家页面才会展示该物品", "success");
     });
 
     // ===== 自定义标签：添加按钮 + 回车 + 删除 =====
@@ -3571,11 +3610,7 @@
         data.demands.unshift(lastDemand);
         saveData(data);
         renderDemandPublishBar();
-        if (window.Utils && window.Utils.showToast) {
-          window.Utils.showToast("已发布，卖家端「需求风向标」可见", "success");
-        } else {
-          alert("已发布，卖家端「需求风向标」可见。");
-        }
+        uiTip("已发布，卖家端「需求风向标」可见", "success");
         return;
       }
 
@@ -3723,7 +3758,7 @@
     // ===== 学生认证拦截：未认证不能发布 =====
     function requireVerified() {
       if (!window.AuthModule.isVerified()) {
-        alert("管理员还未认证你的学生身份，暂时不能发布，请耐心等待。");
+        uiTip("管理员还未认证你的学生身份，暂时不能发布，请耐心等待", "warn");
         return false;
       }
       return true;

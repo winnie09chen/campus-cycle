@@ -164,7 +164,7 @@
     }
     .rc-ai .label { color: var(--red); font-weight: 700; margin-right: 4px; }
     .tags { display: flex; flex-wrap: wrap; gap: 7px; }
-    .tag { border-radius: 999px; background: #f2f3f5; color: #4c5563; padding: 5px 9px; font-size: 12px; }
+    .tag { border-radius: 999px; background: #f2f3f5; color: #4c5563; padding: 4px 10px; font-size: 12px; }
     .tag.warn { background: #fff7e6; color: var(--warn); }
     .tag.bad { background: #fff1f0; color: var(--bad); }
     .rc-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
@@ -209,7 +209,7 @@
       animation: popIn .24s var(--ease);
     }
     .modal-content {
-      background: #fff; border-radius: 12px; padding: 24px;
+      background: #fff; border-radius: var(--radius-lg); padding: 24px;
       width: min(520px, calc(100% - 32px)); box-shadow: var(--shadow);
     }
     .modal-content h3 { font-size: 18px; margin-bottom: 16px; }
@@ -242,8 +242,6 @@
       .review-card img, .thumb-placeholder { width: 100%; height: 180px; }
     }
 
-    /* ===== 移动端适配（<=600px） ===== */
-    @media (max-width: 600px) {
     /* ===== 首屏鉴权遮罩（boot-gate：鉴权完成前隐藏内容） ===== */
     body.boot-gate > *:not(.boot-veil) { visibility: hidden; }
     .boot-veil {
@@ -270,6 +268,8 @@
     }
     @keyframes bootspin { to { transform: rotate(360deg); } }
 
+    /* ===== 移动端适配（<=600px） ===== */
+    @media (max-width: 600px) {
     .topbar {
         height: auto;
         flex-wrap: wrap;
@@ -595,6 +595,11 @@
     var DM = window.DataModule;
     var NM = window.NotifyModule;
     var U = window.Utils;
+    // 统一轻提示：优先 toast，Utils 缺失时回退 alert
+    function uiTip(msg, type) {
+      if (window.Utils && Utils.showToast) { Utils.showToast(msg, type); }
+      else { alert(msg); }
+    }
     var categoryMap = DM.categoryMap;
     function getCategoryLabel(itemOrCategory) { return DM.getCategoryLabel(itemOrCategory); }
     function escapeHTML(value) { return U.escapeHTML(value); }
@@ -1031,11 +1036,11 @@
 
     async function verifyUserDo(studentId) {
       try { await window.AuthModule.verifyUser(studentId, "verify"); renderUsers(); }
-      catch (e) { alert(e.message); }
+      catch (e) { uiTip(e.message, "error"); }
     }
     async function rejectUserDo(studentId) {
       try { await window.AuthModule.verifyUser(studentId, "reject"); renderUsers(); }
-      catch (e) { alert(e.message); }
+      catch (e) { uiTip(e.message, "error"); }
     }
 
     function updateUserArea() {
@@ -1157,19 +1162,19 @@
       const studentId = document.getElementById("newReviewerId").value.trim();
       const email = document.getElementById("newReviewerEmail").value.trim();
       const nickname = document.getElementById("newReviewerName").value.trim();
-      if (!studentId || !email) { alert("请填写学号和邮箱"); return; }
+      if (!studentId || !email) { uiTip("请填写学号和邮箱", "warn"); return; }
       const btn = document.getElementById("reviewerSave");
       btn.disabled = true; btn.textContent = "创建中…";
       try {
         await window.AuthModule.addReviewer(studentId, email, nickname);
-        alert("审核员已创建，密码已发送到其邮箱");
+        uiTip("审核员已创建，密码已发送到其邮箱", "success");
         document.getElementById("reviewerModal").classList.remove("active");
         document.getElementById("newReviewerId").value = "";
         document.getElementById("newReviewerEmail").value = "";
         document.getElementById("newReviewerName").value = "";
         renderUsers();
       } catch (e) {
-        alert(e.message);
+        uiTip(e.message, "error");
       } finally {
         btn.disabled = false; btn.textContent = "创建并发送密码";
       }

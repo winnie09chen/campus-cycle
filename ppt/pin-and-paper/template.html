@@ -288,6 +288,17 @@ section.slide::before {
 }
 .s-shots .shot .cap p { font-size: 20px; line-height: 1.35; margin: 0; opacity: .85; }
 
+
+/* ==== 迭代与反思：四列卡片变体 ==== */
+.s-notes.cols4 .grid { grid-template-columns: repeat(4, 1fr); gap: 26px; }
+.s-notes.cols4 .card { padding: 34px 24px 22px; }
+.s-notes.cols4 .card h3 { font-size: 30px; margin: 10px 0 12px; }
+.s-notes.cols4 .card ul { margin: 0; padding-left: 22px; font-size: 21px; line-height: 1.5; }
+.s-notes.cols4 .card ul li { margin-bottom: 10px; }
+.s-notes.cols4 .card .scribble { font-size: 30px; padding-top: 10px; }
+/* 目录 8 行收紧行距 */
+.s-toc .trow { padding: 17px 0; }
+
 /* ============ NOTICE HEAD SPLIT (matrix-style big title) ============ */
 .s-notice .head.split {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 40px;
@@ -820,7 +831,7 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
         <div class="cap">扫码即达 · 免安装</div>
       </div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>02 / 13</span></div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>02 / 14</span></div>
   </section>
 
   <!-- ============ 03 目录 ============ -->
@@ -851,30 +862,37 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
       </div>
       <div class="trow">
         <span class="num">04</span>
-        <span class="lab">课程技术点 · VLM / NLP / 视觉质检</span>
+        <span class="lab">迭代与反思</span>
         <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
-        <span class="meta">P · 07–09</span>
+        <span class="meta">P · 07</span>
       </div>
       <div class="trow">
         <span class="num">05</span>
-        <span class="lab">核心功能演示 · 含实际使用截图</span>
-        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
-        <span class="meta">P · 10–11</span>
+        <span class="lab">课程技术点 · VLM / NLP / 视觉质检</span>
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="meta">P · 08–10</span>
       </div>
       <div class="trow">
         <span class="num">06</span>
-        <span class="lab">安全与工程质量</span>
-        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
-        <span class="meta">P · 12</span>
+        <span class="lab">核心功能演示 · 含实际使用截图</span>
+        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+        <span class="meta">P · 11–12</span>
       </div>
       <div class="trow">
         <span class="num">07</span>
-        <span class="lab">总结与展望</span>
+        <span class="lab">安全与工程质量</span>
         <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
         <span class="meta">P · 13</span>
       </div>
+      <div class="trow">
+        <span class="num">08</span>
+        <span class="lab">总结与展望</span>
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="meta">P · 14</span>
+      </div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>03 / 13</span></div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>03 / 14</span></div>
   </section>
 
   <!-- ============ 02 背景与痛点 ============ -->
@@ -911,7 +929,7 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
         <div class="scribble">旧物值得<span class="underline">下一个主人</span></div>
       </div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>04 / 13</span></div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>04 / 14</span></div>
   </section>
 
   <!-- ============ 03 定位与角色体系 ============ -->
@@ -947,7 +965,7 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
         <div class="scribble">有人管，才可信。</div>
       </div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>05 / 13</span></div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>05 / 14</span></div>
   </section>
 
   <!-- ============ 04 系统架构 ============ -->
@@ -997,11 +1015,74 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
         <div class="chips"><span>Blobs</span><span>Qwen-VL</span><span>Qwen</span><span>SMTP</span></div>
       </div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>06 / 13</span></div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>06 / 14</span></div>
   </section>
 
-  <!-- ============ 05 技术点 1 · VLM 看图识物 ============ -->
-  <section class="slide s-notice" data-screen-label="07 VLM 看图识物" data-om-validate="false">
+    <!-- ============ 07 迭代与反思 ============ -->
+  <section class="slide s-notes cols4" data-screen-label="07 迭代与反思" data-om-validate="false">
+    <div class="top">
+      <span class="lockup"><svg><use href="#mark"/></svg> 迭代 · 反思</span>
+      <span class="meta"><span>初赛 → 决赛</span></span>
+    </div>
+    <div class="head">
+      <h2>迭代与反思</h2>
+      <div class="sub">初赛验证方向，决赛打磨品质 —— 功能闭环、认证安全与体验一致性三条主线的持续迭代，以及一次迟到的工程反思。</div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="num">优化 · 01</span>
+        <h3>功能闭环</h3>
+        <ul>
+          <li>模拟钱包托管交易：下单冻结、确认到账、原路退款</li>
+          <li>消息中心：订单、审核、援助与心愿上新自动通知</li>
+          <li>心愿单供需闭环与卖家需求风向标</li>
+          <li>批量审核与操作审计日志</li>
+        </ul>
+        <div class="scribble">从可用走向可靠</div>
+      </div>
+      <div class="card alt">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="num">优化 · 02</span>
+        <h3>认证与 AI 增强</h3>
+        <ul>
+          <li>邮箱验证码注册与角色门禁分流</li>
+          <li>登录失败锁定与会话治理，防暴力破解</li>
+          <li>AI 交易流水分析：概览 / 风险 / 品类 / 建议</li>
+          <li>会话令牌过期机制修复</li>
+        </ul>
+        <div class="scribble">权限先行，能力再放</div>
+      </div>
+      <div class="card alt2">
+        <svg class="pin" viewBox="0 0 360 130"><use href="#pin-open"/></svg>
+        <span class="num">优化 · 03</span>
+        <h3>体验一致性</h3>
+        <ul>
+          <li>common.css 设计令牌统一四端视觉</li>
+          <li>轻提示体系替代阻断式弹窗</li>
+          <li>首屏鉴权遮罩，消除内容闪现</li>
+          <li>移动端响应式与汉堡导航</li>
+        </ul>
+        <div class="scribble">一套语言，四页一致</div>
+      </div>
+      <div class="card">
+        <svg class="pin" viewBox="0 0 360 110"><use href="#pin"/></svg>
+        <span class="num">优化 · 04</span>
+        <h3>质量加固与反思</h3>
+        <ul>
+          <li>全接口登录鉴权，防配额盗刷</li>
+          <li>补全 20 处 XSS 输出转义</li>
+          <li>数据读写收拢至 data-module</li>
+          <li>渲染防抖与乱序防护</li>
+        </ul>
+        <div class="scribble">安全不该靠补 —— 规范先行</div>
+      </div>
+    </div>
+    <div class="footer"><span>物候 · Campus Cycle</span></div>
+  </section>
+
+<!-- ============ 05 技术点 1 · VLM 看图识物 ============ -->
+  <section class="slide s-notice" data-screen-label="08 VLM 看图识物" data-om-validate="false">
     <div class="top">
       <span class="lockup"><svg><use href="#mark"/></svg> 技术点 · 01 VLM</span>
       <span class="meta"><span>看图识物</span></span>
@@ -1037,11 +1118,11 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
         </ul>
       </div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>07 / 13</span></div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>08 / 14</span></div>
   </section>
 
   <!-- ============ 06 技术点 2 · NLP 解析 + Agent 匹配 ============ -->
-  <section class="slide s-matrix" data-screen-label="08 NLP 与 Agent 匹配" data-om-validate="false">
+  <section class="slide s-matrix" data-screen-label="09 NLP 与 Agent 匹配" data-om-validate="false">
     <div class="top">
       <span class="lockup"><svg><use href="#mark"/></svg> 技术点 · 02 匹配</span>
       <span class="meta"><span>需求解析</span></span>
@@ -1081,11 +1162,11 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
       <div class="cell last">卖家无有效举报记录</div>
       <div class="cell last">信誉加成</div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>08 / 13</span></div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>09 / 14</span></div>
   </section>
 
   <!-- ============ 07 技术点 3 · MediaPipe 视觉质检 + 扩展 AI ============ -->
-  <section class="slide s-stats" data-screen-label="09 视觉质检与扩展" data-om-validate="false">
+  <section class="slide s-stats" data-screen-label="10 视觉质检与扩展" data-om-validate="false">
     <div class="top">
       <span class="lockup"><svg><use href="#mark"/></svg> 技术点 · 03 视觉</span>
       <span class="meta"><span>质检与扩展</span></span>
@@ -1114,11 +1195,11 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
         <p>脱敏订单数据送 Qwen，生成概览 / 异常风险 / 品类洞察 / 运营建议的 Markdown 报告。</p>
       </div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>09 / 13</span></div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>10 / 14</span></div>
   </section>
 
   <!-- ============ 08 核心功能演示 · 托管交易状态机 ============ -->
-  <section class="slide s-process" data-screen-label="10 核心功能演示" data-om-validate="false">
+  <section class="slide s-process" data-screen-label="11 核心功能演示" data-om-validate="false">
     <div class="top">
       <span class="lockup"><svg><use href="#mark"/></svg> 功能演示</span>
       <span class="meta"><span>托管交易</span></span>
@@ -1189,11 +1270,11 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
         </div>
       </div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>10 / 13</span></div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>11 / 14</span></div>
   </section>
 
   <!-- ============ 11 实际使用一览 ============ -->
-  <section class="slide s-shots" data-screen-label="11 实际使用一览" data-om-validate="false">
+  <section class="slide s-shots" data-screen-label="12 实际使用一览" data-om-validate="false">
     <div class="top">
       <span class="lockup"><svg><use href="#mark"/></svg> 实际使用</span>
       <span class="meta"><span>四个界面</span></span>
@@ -1224,11 +1305,11 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
         <div class="cap"><h4>审核员工作台</h4><p>认证 · 审核 · 举报 · 交易总览</p></div>
       </div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>11 / 13</span></div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>12 / 14</span></div>
   </section>
 
   <!-- ============ 09 安全与工程质量（加分项） ============ -->
-  <section class="slide s-notice" data-screen-label="12 安全与工程" data-om-validate="false">
+  <section class="slide s-notice" data-screen-label="13 安全与工程" data-om-validate="false">
     <div class="top">
       <span class="lockup"><svg><use href="#mark"/></svg> 安全 · 工程</span>
     </div>
@@ -1259,11 +1340,11 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
         </ul>
       </div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>12 / 13</span></div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>13 / 14</span></div>
   </section>
 
   <!-- ============ 10 总结与展望 ============ -->
-  <section class="slide s-cta" data-screen-label="13 总结与展望" data-om-validate="false">
+  <section class="slide s-cta" data-screen-label="14 总结与展望" data-om-validate="false">
     <div class="top">
       <span class="lockup"><svg><use href="#mark"/></svg> 总结 · 展望</span>
       <span class="meta"><span>致谢</span></span>
@@ -1307,7 +1388,7 @@ h1, h2, h3, h4, .top, .footer, .s-cover .super, .s-cta .pane.l .super { letter-s
         </div>
       </div>
     </div>
-    <div class="footer"><span>物候 · Campus Cycle</span><span>13 / 13</span></div>
+    <div class="footer"><span>物候 · Campus Cycle</span><span>14 / 14</span></div>
   </section>
 
 </deck-stage>

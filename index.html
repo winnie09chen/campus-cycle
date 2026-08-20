@@ -1885,6 +1885,8 @@
 
     let data = loadData();
     let selectedImageData = "";
+    // 记录「生成物品信息」最近一次自动回填的物品名称（用于区分用户手动输入）
+    let lastAutoSubject = null;
     // 买家列表分页状态
     let buyerDemandList = null; // 非 null 表示当前按某次需求匹配后的排序列表
     let lastDemand = null;      // 最近一次需求，用于跨页刷新时重跑匹配
@@ -3157,10 +3159,20 @@
       img.src = dataUrl;
     }
 
+    // 换新照片 = 新物品：若名称是上次自动回填的则清空（用户手填的值保留）
+    function resetAutoSubjectForNewPhoto() {
+      const subjectEl = document.getElementById("sellerSubject");
+      if (subjectEl.value.trim() && subjectEl.value.trim() === lastAutoSubject) {
+        subjectEl.value = "";
+        lastAutoSubject = null;
+      }
+    }
+
     document.getElementById("photoInput").addEventListener("change", (event) => {
       const file = event.target.files[0];
       if (!file) return;
       clearRetake(); // 新选图：清除上次的重拍横幅
+      resetAutoSubjectForNewPhoto(); // 新选图：清除上次回填的物品名称
       // 使用图片压缩模块
       IC.compress(file, { maxWidth: 800, quality: 0.7 }).then(function(result) {
         selectedImageData = result.dataUrl;
@@ -3218,6 +3230,7 @@
       const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
       stopCamera();
       clearRetake();
+      resetAutoSubjectForNewPhoto(); // 拍摄新照片：清除上次回填的物品名称
       compressAndPreview(dataUrl); // 拍完进入预览，用户再点「生成物品信息」识别
     }
 
@@ -3329,13 +3342,16 @@
           note = result.handMessage ? (src + "；" + result.handMessage) : src + "。";
         }
 
-        // 卖家手动填写的名称优先，否则把识别到的名称回填进输入框
+        // 名称优先级：手动输入 > 识别结果；通过 lastAutoSubject 区分「上次自动回填」与「用户手填」，
+        // 避免换照片重新识别时被上一次回填的旧名称劫持
         const subjectEl = document.getElementById("sellerSubject");
         const userSubject = subjectEl.value.trim();
-        if (userSubject) {
-          result.subject = userSubject;
+        if (userSubject && userSubject !== lastAutoSubject) {
+          result.subject = userSubject; // 用户手动填写过，尊重手动值
         } else {
+          result.subject = result.subject || userSubject; // 空或为上次回填 → 用新识别结果覆盖
           subjectEl.value = result.subject;
+          lastAutoSubject = result.subject;
         }
         if (!result.tags || !result.tags.length) result.tags = ["实拍上传"];
 
@@ -3410,6 +3426,7 @@
         if (manualSubject) {
           data.currentDraft.subject = manualSubject;
           document.getElementById("sellerSubject").value = manualSubject;
+          lastAutoSubject = null; // 手动修正视为用户输入，后续识别不覆盖
         }
         data.currentDraft.title = `${getCategoryLabel(data.currentDraft)}-${data.currentDraft.subject}`;
         const description = window.generateDescription
